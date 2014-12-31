@@ -3,10 +3,18 @@
 import xml.etree.ElementTree as elementtree
 import sys
 
+# To do
+# - Enforce aspect ratio
+# - read multiple files
+# - take lat/lon bounds from command line
+# - put a logo on the page
+# - specify the page size?
+
 def main():
-  inputfile = "20121202.gpx"
-  inputfile = "20121209.gpx"
-  inputfile = "20130528.gpx"
+  inputfile = "20121202.gpx"  # aspect ratio: 2.375410
+#  inputfile = "20121209.gpx"
+#  inputfile = "20130528.gpx"
+#  inputfile = "20130625.gpx"  # aspect ratio: 0.755854
   papersize = (612, 792)
 
   maxlat = -500
@@ -42,10 +50,26 @@ def main():
         if point[1] < minlon:
           minlon = point[1]
           
-#  print "Max Lat: %f" % maxlat
-#  print "Max Lon: %f" % maxlon
-#  print "Min Lat: %f" % minlat
-#  print "Min Lon: %f" % minlon
+#  sys.stderr.write("Max Lat: %f\n" % maxlat)
+#  sys.stderr.write("Max Lon: %f\n" % maxlon)
+#  sys.stderr.write("Min Lat: %f\n" % minlat)
+#  sys.stderr.write("Min Lon: %f\n" % minlon)
+
+#  sys.stderr.write("Page ratio: %f\n" % (float(papersize[1])/float(papersize[0])))
+#  sys.stderr.write("Geo ratio:  %f\n" % ((maxlon-minlon)/(maxlat-minlat)))
+  
+  if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
+    height = maxlat - minlat
+    newwidth = height * (float(papersize[1])/float(papersize[0]))
+    widthdiff = newwidth - (maxlon - minlon)
+    maxlon = maxlon + (widthdiff/2)
+    minlon = minlon - (widthdiff/2)
+  else:
+    width = maxlon - minlon
+    newheight = width / (float(papersize[1])/float(papersize[0]))
+    heightdiff = newheight - (maxlat - minlat)
+    maxlat = maxlat + (heightdiff/2)
+    minlat = minlat - (heightdiff/2)
 
 #  print "Rescaled: %f" % scale(35.903369, (minlat, maxlat), (0, papersize[1]))
   
