@@ -5,8 +5,10 @@ import sys, os
 
 # To do
 # - take lat/lon bounds from command line
+# - take center and radius from command line
+# - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
-# - put a logo on the page
+# - put a logo on the page (command line option for .eps file?)
 # - specify the page size?
 
 def main():
