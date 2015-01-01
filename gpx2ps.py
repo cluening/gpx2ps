@@ -62,10 +62,10 @@ def main():
             
             
 #  # Below are approximately Los Alamos
-#  maxlat =   35.925005
-#  maxlon = -106.255603
-#  minlat =   35.860472
-#  minlon = -106.339116
+  maxlat =   35.925005
+  maxlon = -106.255603
+  minlat =   35.860472
+  minlon = -106.339116
   
   # Second pass: draw the lines
   for inputfile in inputfiles:
@@ -95,14 +95,26 @@ def main():
       for segment in track:
         print "% A segment"
         print "newpath"
-        print "0 0 moveto"
-        if len(segment) > 0:
-          print "%f %f moveto" % (scale(segment[0][1], (minlon,maxlon), (0,papersize[1])),
-                                  scale(segment[0][0], (minlat,maxlat), (0,papersize[0])))
-        for point in segment:
-          print "%% A point: %f, %f" % point
-          print "%f %f lineto" % (scale(point[1], (minlon,maxlon), (0,papersize[1])),
-                                  scale(point[0], (minlat,maxlat), (0,papersize[0])))
+        print "0 0 moveto" # FIXME: get rid of this line
+
+        for i in range(len(segment)):
+          if i == 0:
+            print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
+                                    scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
+          else:
+            if ((segment[i-1][0] > minlat and segment[i-1][0] < maxlat) and
+                (segment[i][0]   > minlat and segment[i][0]   < maxlat) and
+                (segment[i-1][1] > minlon and segment[i-1][1] < maxlon) and
+                (segment[i][1]   > minlon and segment[i][1]   < maxlon)):
+              if prevdrawn == False:
+                print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
+                                      scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
+              print "%f %f lineto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
+                                      scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
+              prevdrawn = True
+            else:
+              prevdrawn = False
+        
         print "stroke"
 
 
