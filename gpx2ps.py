@@ -95,7 +95,6 @@ def main():
       for segment in track:
         print "% A segment"
         print "newpath"
-        print "0 0 moveto" # FIXME: get rid of this line
 
         for i in range(len(segment)):
           if i == 0:
