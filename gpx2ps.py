@@ -4,22 +4,23 @@ import xml.etree.ElementTree as elementtree
 import sys, os
 
 # To do
-# - read multiple files
 # - take lat/lon bounds from command line
+# - if line length is over a limit, use moveto instead of lineto
 # - put a logo on the page
 # - specify the page size?
 
 def main():
-  inputfile = "20121202.gpx"  # aspect ratio: 2.375410
+#  inputfile = "20121202.gpx"  # aspect ratio: 2.375410
 #  inputfile = "20130625.gpx"  # aspect ratio: 0.755854
-  inputfile = "20111127-20111210.gpx"
+#  inputfile = "20111127-20111210.gpx"
 #  inputfile = "20130528.gpx"
 
-  inputdir = "/Users/cluening/GPS/GPX/Archive"
-  inputfiles = os.listdir(inputdir)
+  inputdir = "."
+  inputfiles = ["20121202.gpx"]
   
-#  print inputfiles
-#  sys.exit()
+  inputdir = "/Users/cluening/GPS/GPX/Archive"
+  inputdir = "/Users/cluening/GPS/gpx.etrex"
+  inputfiles = os.listdir(inputdir)
 
   papersize = (612, 792)
 
@@ -30,10 +31,11 @@ def main():
 
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
-  print ".5 setlinewidth"
-  print "1 setlinecap"
-  print "1 setlinejoin"
+  print "0 setlinewidth"  # '0' means "thinnest possible on device"
+  print "1 setlinecap"    # rounded
+  print "1 setlinejoin"   # rounded
 
+  # First pass: figure out the bounds
   for inputfile in inputfiles:
     try:
       tree = elementtree.parse(inputdir + "/" + inputfile)
@@ -55,6 +57,22 @@ def main():
             maxlon = point[1]
           if point[1] < minlon:
             minlon = point[1]
+            
+            
+#  # Below are approximately Los Alamos
+#  maxlat =   35.925005
+#  maxlon = -106.255603
+#  minlat =   35.860472
+#  minlon = -106.339116
+  
+  # Second pass: draw the lines
+  for inputfile in inputfiles:
+    try:
+      tree = elementtree.parse(inputdir + "/" + inputfile)
+    except elementtree.ParseError as detail:
+      warn("Bad file: %s: %s" % (inputfile, detail))
+
+    gpx = doelement(tree.getroot())
   
     if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
       height = maxlat - minlat
@@ -69,15 +87,16 @@ def main():
       maxlat = maxlat + (heightdiff/2)
       minlat = minlat - (heightdiff/2)
   
-
+    print "%% File: %s" % inputfile
     for track in gpx:
       print "% A track"
       for segment in track:
         print "% A segment"
         print "newpath"
         print "0 0 moveto"
-        print "%f %f moveto" % (scale(segment[0][1], (minlon,maxlon), (0,papersize[1])),
-                                scale(segment[0][0], (minlat,maxlat), (0,papersize[0])))
+        if len(segment) > 0:
+          print "%f %f moveto" % (scale(segment[0][1], (minlon,maxlon), (0,papersize[1])),
+                                  scale(segment[0][0], (minlat,maxlat), (0,papersize[0])))
         for point in segment:
           print "%% A point: %f, %f" % point
           print "%f %f lineto" % (scale(point[1], (minlon,maxlon), (0,papersize[1])),
