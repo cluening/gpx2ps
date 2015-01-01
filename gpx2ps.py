@@ -102,10 +102,10 @@ def main():
             print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
                                     scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
           else:
-            if ((segment[i-1][0] > minlat and segment[i-1][0] < maxlat) and
-                (segment[i][0]   > minlat and segment[i][0]   < maxlat) and
-                (segment[i-1][1] > minlon and segment[i-1][1] < maxlon) and
-                (segment[i][1]   > minlon and segment[i][1]   < maxlon)):
+            if (((segment[i-1][0] > minlat and segment[i-1][0] < maxlat)  and
+                 (segment[i][0]   > minlat and segment[i][0]   < maxlat)) or
+                ((segment[i-1][1] > minlon and segment[i-1][1] < maxlon)  and
+                 (segment[i][1]   > minlon and segment[i][1]   < maxlon))):
               if prevdrawn == False:
                 print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
                                       scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
