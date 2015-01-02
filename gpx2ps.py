@@ -2,9 +2,9 @@
 
 import xml.etree.ElementTree as elementtree
 import sys, os
+import argparse
 
 # To do
-# - take lat/lon bounds from command line
 # - take center and radius from command line
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
@@ -17,19 +17,27 @@ def main():
 #  inputfile = "20111127-20111210.gpx"
 #  inputfile = "20130528.gpx"
 
+  papersize = (612, 792)
+  parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
+  parser.add_argument("--maxlat", dest="maxlat", default=-500, type=float, action="store")
+  parser.add_argument("--maxlon", dest="maxlon", default=-500, type=float, action="store")
+  parser.add_argument("--minlat", dest="minlat", default=500, type=float, action="store")
+  parser.add_argument("--minlon", dest="minlon", default=500, type=float, action="store")
+  parser.add_argument("--autofit", dest="autofit", action="store_true")
+  args = parser.parse_args()
+
   inputdir = "."
   inputfiles = ["20121202.gpx"]
   
   inputdir = "/Users/cluening/GPS/GPX/Archive"
+  inputdir = "/Users/cluening/GPS/GPX/Archive.sanified"
   inputdir = "/Users/cluening/GPS/gpx.etrex"
   inputfiles = os.listdir(inputdir)
 
-  papersize = (612, 792)
-
-  maxlat = -500
-  maxlon = -500
-  minlat = 500
-  minlon = 500
+  maxlat = args.maxlat
+  maxlon = args.maxlon
+  minlat = args.minlat
+  minlon = args.minlon
 
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
@@ -38,34 +46,34 @@ def main():
   print "1 setlinejoin"   # rounded
 
   # First pass: figure out the bounds
-  for inputfile in inputfiles:
-    try:
-      tree = elementtree.parse(inputdir + "/" + inputfile)
-    except elementtree.ParseError as detail:
-      warn("Bad file: %s: %s" % (inputfile, detail))
-#    tree.write(sys.stdout)
+  if args.autofit == True:
+    for inputfile in inputfiles:
+      try:
+        tree = elementtree.parse(inputdir + "/" + inputfile)
+      except elementtree.ParseError as detail:
+        warn("Bad file: %s: %s" % (inputfile, detail))
 
-    gpx = doelement(tree.getroot())
+      gpx = doelement(tree.getroot())
         
-    # Find minimum and maximum latitude and longitude
-    for track in gpx:
-      for segment in track:
-        for point in segment:
-          if point[0] > maxlat:
-            maxlat = point[0]
-          if point[0] < minlat:
-            minlat = point[0]
-          if point[1] > maxlon:
-            maxlon = point[1]
-          if point[1] < minlon:
-            minlon = point[1]
+      # Find minimum and maximum latitude and longitude
+      for track in gpx:
+        for segment in track:
+          for point in segment:
+            if point[0] > maxlat:
+              maxlat = point[0]
+            if point[0] < minlat:
+              minlat = point[0]
+            if point[1] > maxlon:
+              maxlon = point[1]
+            if point[1] < minlon:
+              minlon = point[1]
             
             
-#  # Below are approximately Los Alamos
-  maxlat =   35.925005
-  maxlon = -106.255603
-  minlat =   35.860472
-  minlon = -106.339116
+  # Below are approximately Los Alamos
+#  maxlat =   35.925005
+#  maxlon = -106.255603
+#  minlat =   35.860472
+#  minlon = -106.339116
   
   # Second pass: draw the lines
   for inputfile in inputfiles:
@@ -142,7 +150,6 @@ def doelement(element):
   if element.tag.endswith("trkpt"):
     lat = float(element.attrib['lat'])
     lon = float(element.attrib['lon'])
-#    print "      Got a point! %f, %f" % (lat, lon)
     return (lat, lon)
 
 
