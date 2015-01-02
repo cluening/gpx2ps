@@ -5,6 +5,8 @@ import sys, os
 import argparse
 
 # To do
+# - specify inputdir on command line
+# - specify output file on command line (default to sys.stdout)
 # - take center and radius from command line
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
@@ -19,11 +21,12 @@ def main():
 
   papersize = (612, 792)
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
-  parser.add_argument("--maxlat", dest="maxlat", default=-500, type=float, action="store")
-  parser.add_argument("--maxlon", dest="maxlon", default=-500, type=float, action="store")
-  parser.add_argument("--minlat", dest="minlat", default=500, type=float, action="store")
-  parser.add_argument("--minlon", dest="minlon", default=500, type=float, action="store")
-  parser.add_argument("--autofit", dest="autofit", action="store_true")
+  bbgroup = parser.add_argument_group("Bounding Box", "Crop the output to cover this area.")
+  bbgroup.add_argument("--maxlat", dest="maxlat", default=-500, type=float, action="store")
+  bbgroup.add_argument("--maxlon", dest="maxlon", default=-500, type=float, action="store")
+  bbgroup.add_argument("--minlat", dest="minlat", default=500, type=float, action="store")
+  bbgroup.add_argument("--minlon", dest="minlon", default=500, type=float, action="store")
+  parser.add_argument("--autofit", dest="autofit", action="store_true", help="Automatically crop output to fit data")
   args = parser.parse_args()
 
   inputdir = "."
