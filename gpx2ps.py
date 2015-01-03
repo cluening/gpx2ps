@@ -11,6 +11,8 @@ import argparse
 #     --center x,y --radius 5[mi|km|ft|m]
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
+# - put title on page
+#   - in lower right corner; with box around it; specify on command line
 # - put a logo on the page (command line option for .eps file?)
 # - specify the page size?
 
@@ -22,12 +24,11 @@ def main():
 
   papersize = (612, 792)
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
-  bbgroup = parser.add_argument_group("Bounding Box", "Crop the output to cover this area.")
-  bbgroup.add_argument("--maxlat", dest="maxlat", default=-500, type=float, action="store")
-  bbgroup.add_argument("--maxlon", dest="maxlon", default=-500, type=float, action="store")
-  bbgroup.add_argument("--minlat", dest="minlat", default=500, type=float, action="store")
-  bbgroup.add_argument("--minlon", dest="minlon", default=500, type=float, action="store")
-  parser.add_argument("--autofit", dest="autofit", action="store_true", help="Automatically crop output to fit data")
+  parser.add_argument("--bbox", dest="bbox", action="store", 
+                      metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
+                      help="Crop output to fit within this bounding box")
+  parser.add_argument("--autofit", dest="autofit", action="store_true", 
+                      help="Automatically crop output to fit data")
   args = parser.parse_args()
 
   inputdir = "."
@@ -38,19 +39,32 @@ def main():
   inputdir = "/Users/cluening/GPS/gpx.etrex"
   inputfiles = os.listdir(inputdir)
 
-  maxlat = args.maxlat
-  maxlon = args.maxlon
-  minlat = args.minlat
-  minlon = args.minlon
+  if args.bbox == None:
+    minlat = -90
+    minlon = -180
+    maxlat = 90
+    maxlon = 180
+  else:
+    bbox = args.bbox.split(",")
+    if len(bbox) != 4:
+      sys.stderr.write("Error: not enough items in bounding box list")
+      sys.exit(1)
+    minlat = float(bbox[0])
+    minlon = float(bbox[1])
+    maxlat = float(bbox[2])
+    maxlon = float(bbox[3])
 
-  print "90 rotate"
-  print "%d %d translate" % (0, papersize[0]*-1)
-  print "0 setlinewidth"  # '0' means "thinnest possible on device"
-  print "1 setlinecap"    # rounded
-  print "1 setlinejoin"   # rounded
+
 
   # First pass: figure out the bounds
   if args.autofit == True:
+    if args.bbox != None:
+      sys.stderr.write("Error: can't specify bounding box and autofit at the same time")
+      sys.exit(1)
+    minlat = 500
+    minlon = 500
+    maxlat = -500
+    maxlon = -500
     for inputfile in inputfiles:
       try:
         tree = elementtree.parse(inputdir + "/" + inputfile)
@@ -73,12 +87,17 @@ def main():
             if point[1] < minlon:
               minlon = point[1]
             
-            
   # Below are approximately Los Alamos
 #  maxlat =   35.925005
 #  maxlon = -106.255603
 #  minlat =   35.860472
 #  minlon = -106.339116
+
+  print "90 rotate"
+  print "%d %d translate" % (0, papersize[0]*-1)
+  print "0 setlinewidth"  # '0' means "thinnest possible on device"
+  print "1 setlinecap"    # rounded
+  print "1 setlinejoin"   # rounded
   
   # Second pass: draw the lines
   for inputfile in inputfiles:
@@ -105,9 +124,7 @@ def main():
   
     print "%% File: %s" % inputfile
     for track in gpx:
-      print "% A track"
       for segment in track:
-        print "% A segment"
         print "newpath"
 
         for i in range(len(segment)):
