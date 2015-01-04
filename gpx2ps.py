@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import xml.etree.ElementTree as elementtree
-import sys, os
+import sys, os, glob
 import argparse
 
 # To do
@@ -14,16 +14,15 @@ import argparse
 # - put title on page
 #   - in lower right corner; with box around it; specify on command line
 # - put a logo on the page (command line option for .eps file?)
+# - add landscape postscript header
 # - specify the page size?
 
 def main():
-#  inputfile = "20121202.gpx"  # aspect ratio: 2.375410
-#  inputfile = "20130625.gpx"  # aspect ratio: 0.755854
-#  inputfile = "20111127-20111210.gpx"
-#  inputfile = "20130528.gpx"
-
   papersize = (612, 792)
+
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
+  parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
+                      help="Directory that contains gpx files")
   parser.add_argument("--bbox", dest="bbox", action="store", 
                       metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
                       help="Crop output to fit within this bounding box")
@@ -31,13 +30,10 @@ def main():
                       help="Automatically crop output to fit data")
   args = parser.parse_args()
 
-  inputdir = "."
-  inputfiles = ["20121202.gpx"]
-  
-  inputdir = "/Users/cluening/GPS/GPX/Archive"
-  inputdir = "/Users/cluening/GPS/GPX/Archive.sanified"
-  inputdir = "/Users/cluening/GPS/gpx.etrex"
-  inputfiles = os.listdir(inputdir)
+  inputfiles = glob.glob(args.inputdir + "/*.gpx")
+  if len(inputfiles) == 0:
+    sys.stderr.write("Error: no files found\n")
+    sys.exit(1)
 
   if args.bbox == None:
     minlat = -90
@@ -47,7 +43,7 @@ def main():
   else:
     bbox = args.bbox.split(",")
     if len(bbox) != 4:
-      sys.stderr.write("Error: not enough items in bounding box list")
+      sys.stderr.write("Error: not enough items in bounding box list\n")
       sys.exit(1)
     minlat = float(bbox[0])
     minlon = float(bbox[1])
@@ -59,7 +55,7 @@ def main():
   # First pass: figure out the bounds
   if args.autofit == True:
     if args.bbox != None:
-      sys.stderr.write("Error: can't specify bounding box and autofit at the same time")
+      sys.stderr.write("Error: can't specify bounding box and autofit at the same time\n")
       sys.exit(1)
     minlat = 500
     minlon = 500
@@ -67,7 +63,7 @@ def main():
     maxlon = -500
     for inputfile in inputfiles:
       try:
-        tree = elementtree.parse(inputdir + "/" + inputfile)
+        tree = elementtree.parse(inputfile)
       except elementtree.ParseError as detail:
         warn("Bad file: %s: %s" % (inputfile, detail))
         continue
@@ -102,7 +98,7 @@ def main():
   # Second pass: draw the lines
   for inputfile in inputfiles:
     try:
-      tree = elementtree.parse(inputdir + "/" + inputfile)
+      tree = elementtree.parse(inputfile)
     except elementtree.ParseError as detail:
       warn("Bad file: %s: %s" % (inputfile, detail))
       continue
