@@ -5,7 +5,6 @@ import sys, os, glob
 import argparse
 
 # To do
-# - specify inputdir on command line
 # - specify output file on command line (default to sys.stdout)
 # - take center and radius from command line
 #     --center x,y --radius 5[mi|km|ft|m]
