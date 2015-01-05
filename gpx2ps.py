@@ -8,6 +8,7 @@ import argparse
 # - specify output file on command line (default to sys.stdout)
 # - take center and radius from command line
 #     --center x,y --radius 5[mi|km|ft|m]
+#     generate bounding box by calling function twice: once at 135, once at 315
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
 # - put title on page
@@ -22,11 +23,15 @@ def main():
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
   parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
                       help="Directory that contains gpx files")
+  parser.add_argument("--autofit", dest="autofit", action="store_true", 
+                      help="Automatically crop output to fit data")
   parser.add_argument("--bbox", dest="bbox", action="store", 
                       metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
                       help="Crop output to fit within this bounding box")
-  parser.add_argument("--autofit", dest="autofit", action="store_true", 
-                      help="Automatically crop output to fit data")
+  parser.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
+                      help="Center ouput on this point.  Use with --radius")
+  parser.add_argument("--radius", dest="radius", action="store", type=float,
+                      help="Radius of area to include in output.  Use with --center")
   args = parser.parse_args()
 
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
@@ -104,6 +109,7 @@ def main():
 
     gpx = doelement(tree.getroot())
   
+    # Fix the aspect ratio, expanding in one direction as needed 
     if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
       height = maxlat - minlat
       newwidth = height * (float(papersize[1])/float(papersize[0]))
@@ -184,6 +190,26 @@ def warn(message):
 ##
 def scale(val, src, dst):
   return ((val - src[0]) / (src[1]-src[0])) * (dst[1]-dst[0]) + dst[0]
+
+
+## 
+## radiuspoint()
+## Given a point, a radius, and a direction, find the lat/lon of the new point
+## lat, lon, and bearing all in degrees; distance in kilometers
+##
+def radiuspoint(lat, lon, dist, brng):
+  R = 6367  # kilometers
+  d = dist  # must come in in kilometers
+
+  lat, lon = map(math.radians, [lat, lon])
+
+  newlat = math.asin(math.sin(lat)*math.cos(float(d)/float(R)) + 
+                     math.cos(lat)*math.sin(float(d)/float(R))*math.cos(brng) )
+  newlon = lon + math.atan2(math.sin(brng)*math.sin(float(d)/float(R))*math.cos(lat),
+                            math.cos(float(d)/float(R))-math.sin(lat)*math.sin(newlat))
+
+  return map(math.degrees, [newlat, newlon])
+
 
 
 if __name__ == "__main__":
