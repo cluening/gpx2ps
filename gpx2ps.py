@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import xml.etree.ElementTree as elementtree
-import sys, os, glob
+import sys, os, math, glob
 import argparse
 
 # To do
 # - specify output file on command line (default to sys.stdout)
 # - take center and radius from command line
 #     --center x,y --radius 5[mi|km|ft|m]
-#     generate bounding box by calling function twice: once at 135, once at 315
+#     generate bounding box by calling function twice: once at 45, once at 225
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
 # - put title on page
@@ -54,6 +54,10 @@ def main():
     maxlat = float(bbox[2])
     maxlon = float(bbox[3])
 
+  if args.center != None:
+    centerlat, centerlon = map(float, args.center.split(","))
+    maxlat, maxlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(4**2)), 45)
+    minlat, minlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(4**2)), 225)
 
 
   # First pass: figure out the bounds
@@ -202,6 +206,7 @@ def radiuspoint(lat, lon, dist, brng):
   d = dist  # must come in in kilometers
 
   lat, lon = map(math.radians, [lat, lon])
+  brng = math.radians(brng)
 
   newlat = math.asin(math.sin(lat)*math.cos(float(d)/float(R)) + 
                      math.cos(lat)*math.sin(float(d)/float(R))*math.cos(brng) )
