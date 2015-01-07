@@ -6,9 +6,6 @@ import argparse
 
 # To do
 # - specify output file on command line (default to sys.stdout)
-# - take center and radius from command line
-#     --center x,y --radius 5[mi|km|ft|m]
-#     generate bounding box by calling function twice: once at 45, once at 225
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
 # - put title on page
@@ -30,7 +27,7 @@ def main():
                       help="Crop output to fit within this bounding box")
   parser.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
                       help="Center ouput on this point.  Use with --radius")
-  parser.add_argument("--radius", dest="radius", action="store", type=float,
+  parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   args = parser.parse_args()
 
@@ -54,11 +51,24 @@ def main():
     maxlat = float(bbox[2])
     maxlon = float(bbox[3])
 
+  # FIXME: doesn't handle invalid things that end in 'm', like "fm"
+  if args.radius != None:
+    if args.radius.endswith("mi"):
+      radius = 1.609334 * float(args.radius[:-2])
+    elif args.radius.endswith("ft"):
+      radius = .0003048 * float(args.radius[:-2])
+    elif args.radius.endswith("km"):
+      radius = float(args.radius[:-2])
+    elif args.radius.endswith("m"):
+      radius = .001 * float(args.radius[:-1])
+    else:
+      sys.stderr.write("Error: could not parse radius\n")
+      sys.exit(1)
+
   if args.center != None:
     centerlat, centerlon = map(float, args.center.split(","))
-    maxlat, maxlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(4**2)), 45)
-    minlat, minlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(4**2)), 225)
-
+    maxlat, maxlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 45)
+    minlat, minlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 225)
 
   # First pass: figure out the bounds
   if args.autofit == True:
