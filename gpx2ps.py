@@ -5,11 +5,13 @@ import sys, os, math, glob
 import argparse
 
 # To do
+# - fix projection
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
 # - put title on page
 #   - in lower right corner; with box around it; specify on command line
+#   - or maybe centered at the bottom
 # - put a logo on the page (command line option for .eps file?)
 # - add landscape postscript header
 # - specify the page size?
@@ -100,12 +102,20 @@ def main():
               maxlon = point[1]
             if point[1] < minlon:
               minlon = point[1]
-            
-  # Below are approximately Los Alamos
-#  maxlat =   35.925005
-#  maxlon = -106.255603
-#  minlat =   35.860472
-#  minlon = -106.339116
+
+  # Fix the aspect ratio, expanding in one direction as needed 
+  if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
+    height = maxlat - minlat
+    newwidth = height * (float(papersize[1])/float(papersize[0]))
+    widthdiff = newwidth - (maxlon - minlon)
+    maxlon = maxlon + (widthdiff/2)
+    minlon = minlon - (widthdiff/2)
+  else:
+    width = maxlon - minlon
+    newheight = width / (float(papersize[1])/float(papersize[0]))
+    heightdiff = newheight - (maxlat - minlat)
+    maxlat = maxlat + (heightdiff/2)
+    minlat = minlat - (heightdiff/2)            
 
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
@@ -122,20 +132,6 @@ def main():
       continue
 
     gpx = doelement(tree.getroot())
-  
-    # Fix the aspect ratio, expanding in one direction as needed 
-    if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
-      height = maxlat - minlat
-      newwidth = height * (float(papersize[1])/float(papersize[0]))
-      widthdiff = newwidth - (maxlon - minlon)
-      maxlon = maxlon + (widthdiff/2)
-      minlon = minlon - (widthdiff/2)
-    else:
-      width = maxlon - minlon
-      newheight = width / (float(papersize[1])/float(papersize[0]))
-      heightdiff = newheight - (maxlat - minlat)
-      maxlat = maxlat + (heightdiff/2)
-      minlat = minlat - (heightdiff/2)
   
     print "%% File: %s" % inputfile
     for track in gpx:
