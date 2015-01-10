@@ -5,7 +5,7 @@ import sys, os, math, glob
 import argparse
 
 # To do
-# - fix projection
+# - fix projection - use azimuthal?
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
@@ -18,6 +18,10 @@ import argparse
 
 def main():
   papersize = (612, 792)
+
+  #lambertazimuthal(35.896067, -106.276954, 35.884663, -106.252836)
+  #lambertazimuthal(0.0, 0.0, 0.0, 170.0)
+  #sys.exit(1)
 
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
   parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
@@ -202,6 +206,24 @@ def scale(val, src, dst):
   return ((val - src[0]) / (src[1]-src[0])) * (dst[1]-dst[0]) + dst[0]
 
 
+##
+## lambertazimuthal()
+## performs the azimuthal projection calculation
+## x, y range from -2 to 2
+##
+def lambertazimuthal(centlat, centlon, lat, lon):
+#  print "Starting with %f %f" % (lat, lon)
+  p1, l0, p, l = map(math.radians, [centlat, centlon, lat, lon])
+#  print "As radians: %f %f" % (lat, lon)
+  
+  k = math.sqrt(2/(1+math.sin(p1)*math.sin(p) + math.cos(p1)*math.cos(p)*math.cos(l-l0)))
+  
+  x = k * math.cos(p) * math.sin(l-l0)
+  y = k * (math.cos(p1)*math.sin(p) - math.sin(p1)*math.cos(p)*math.cos(l - l0))
+  
+#  print "x, y: %1.15f, %1.15f" % (x, y)
+  return (x, y)
+
 ## 
 ## radiuspoint()
 ## Given a point, a radius, and a direction, find the lat/lon of the new point
@@ -221,6 +243,27 @@ def radiuspoint(lat, lon, dist, brng):
 
   return map(math.degrees, [newlat, newlon])
 
+
+##
+##  haversine() function.  Stolen from stackoverflow
+##
+def haversine(lon1, lat1, lon2, lat2):
+  """
+  Calculate the great circle distance between two points 
+  on the earth (specified in decimal degrees)
+  """
+  # convert decimal degrees to radians 
+  lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+
+  # haversine formula 
+  dlon = lon2 - lon1 
+  dlat = lat2 - lat1 
+  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+  c = 2 * math.asin(math.sqrt(a)) 
+
+  # 6367 km is the radius of the Earth
+  km = 6367 * c
+  return km 
 
 
 if __name__ == "__main__":
