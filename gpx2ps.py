@@ -5,6 +5,7 @@ import sys, os, math, glob
 import argparse
 
 # To do
+# - calculate aspect ratio based on distance, not lat/lon
 # - fix projection - use azimuthal?
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
@@ -20,7 +21,7 @@ def main():
   papersize = (612, 792)
 
   #lambertazimuthal(35.896067, -106.276954, 35.884663, -106.252836)
-  #lambertazimuthal(0.0, 0.0, 0.0, 170.0)
+  #lambertazimuthal(0.0, 0.0, 0.0, 180.0) # FIXME: this one causes a divide by zero error
   #sys.exit(1)
 
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
@@ -121,6 +122,20 @@ def main():
     maxlat = maxlat + (heightdiff/2)
     minlat = minlat - (heightdiff/2)            
 
+
+#  print "minlat: %f" % minlat
+#  print "minlon: %f" % minlon
+#  print "maxlat: %f" % maxlat
+#  print "maxlon: %f" % maxlon
+  
+  minx, miny = lambertazimuthal(centerlat, centerlon, minlat, minlon)
+  maxx, maxy = lambertazimuthal(centerlat, centerlon, maxlat, maxlon)
+
+#  print "minx: %.15f" % minx
+#  print "miny: %.15f" % miny
+#  print "maxx: %.15f" % maxx
+#  print "maxy: %.15f" % maxy
+
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
   print "0 setlinewidth"  # '0' means "thinnest possible on device"
@@ -141,21 +156,35 @@ def main():
     for track in gpx:
       for segment in track:
         print "newpath"
-
         for i in range(len(segment)):
+          x, y = lambertazimuthal(centerlat, centerlon, segment[i][0], segment[i][1])
           if i == 0:
-            print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
-                                    scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
+            print "%f %f moveto" % (scale(x, (minx,maxx), (0,papersize[1])),
+                                    scale(y, (miny,maxy), (0,papersize[0])))
           else:
             if (((segment[i-1][0] > minlat and segment[i-1][0] < maxlat)  and
                  (segment[i][0]   > minlat and segment[i][0]   < maxlat)) or
                 ((segment[i-1][1] > minlon and segment[i-1][1] < maxlon)  and
                  (segment[i][1]   > minlon and segment[i][1]   < maxlon))):
 
-              print "%f %f lineto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
-                                      scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
-        
+              print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
+                                      scale(y, (miny,maxy), (0,papersize[0])))
         print "stroke"
+            
+#         print "newpath % Next"
+#         for i in range(len(segment)):
+#           if i == 0:
+#             print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
+#                                     scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
+#           else:
+#             if (((segment[i-1][0] > minlat and segment[i-1][0] < maxlat)  and
+#                  (segment[i][0]   > minlat and segment[i][0]   < maxlat)) or
+#                 ((segment[i-1][1] > minlon and segment[i-1][1] < maxlon)  and
+#                  (segment[i][1]   > minlon and segment[i][1]   < maxlon))):
+# 
+#               print "%f %f lineto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
+#                                       scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))        
+#         print "stroke"
 
 
 
