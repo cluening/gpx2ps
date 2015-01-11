@@ -5,7 +5,6 @@ import sys, os, math, glob
 import argparse
 
 # To do
-# - calculate aspect ratio based on distance, not lat/lon
 # - fix projection - use azimuthal?
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
@@ -108,33 +107,24 @@ def main():
             if point[1] < minlon:
               minlon = point[1]
 
-  # Fix the aspect ratio, expanding in one direction as needed 
-  if (maxlon-minlon)/(maxlat-minlat) < float(papersize[1])/float(papersize[0]):
-    height = maxlat - minlat
+  # Fix the aspect ratio, expanding in one direction as needed
+  # Takes latitude into account to fix proportions
+  latdist = haversine(maxlat, centerlon, minlat, centerlon)
+  londist = haversine(centerlat, maxlon, centerlat, minlon)
+
+  if londist/latdist < float(papersize[1])/float(papersize[0]):
+    height = latdist
     newwidth = height * (float(papersize[1])/float(papersize[0]))
-    widthdiff = newwidth - (maxlon - minlon)
-    maxlon = maxlon + (widthdiff/2)
-    minlon = minlon - (widthdiff/2)
+    maxlon = radiuspoint(centerlat, centerlon, newwidth/2.0, 90)[1]
+    minlon = radiuspoint(centerlat, centerlon, newwidth/2.0, 270)[1]
   else:
-    width = maxlon - minlon
+    width = londist
     newheight = width / (float(papersize[1])/float(papersize[0]))
-    heightdiff = newheight - (maxlat - minlat)
-    maxlat = maxlat + (heightdiff/2)
-    minlat = minlat - (heightdiff/2)            
-
-
-#  print "minlat: %f" % minlat
-#  print "minlon: %f" % minlon
-#  print "maxlat: %f" % maxlat
-#  print "maxlon: %f" % maxlon
+    maxlat = radiuspoint(centerlat, centerlon, newheight/2.0, 0)[0]
+    minlat = radiuspoint(centerlat, centerlon, newheight/2.0, 180)[0]
   
   minx, miny = lambertazimuthal(centerlat, centerlon, minlat, minlon)
   maxx, maxy = lambertazimuthal(centerlat, centerlon, maxlat, maxlon)
-
-#  print "minx: %.15f" % minx
-#  print "miny: %.15f" % miny
-#  print "maxx: %.15f" % maxx
-#  print "maxy: %.15f" % maxy
 
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
@@ -276,7 +266,7 @@ def radiuspoint(lat, lon, dist, brng):
 ##
 ##  haversine() function.  Stolen from stackoverflow
 ##
-def haversine(lon1, lat1, lon2, lat2):
+def haversine(lat1, lon1, lat2, lon2):
   """
   Calculate the great circle distance between two points 
   on the earth (specified in decimal degrees)
