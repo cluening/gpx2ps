@@ -187,7 +187,7 @@ def main():
                                       scale(y, (miny,maxy), (0,papersize[0])))
         print "stroke"
             
-        # FIXME: pull this out into a rectilinear projection function
+        # FIXME: pull this out into a equirectangular projection function
 #         print "newpath % Next"
 #         for i in range(len(segment)):
 #           if i == 0:
