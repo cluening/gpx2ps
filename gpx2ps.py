@@ -24,14 +24,15 @@ def main():
   #sys.exit(1)
 
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
+  boxgroup = parser.add_mutually_exclusive_group()
   parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
                       help="Directory that contains gpx files")
-  parser.add_argument("--autofit", dest="autofit", action="store_true", 
+  boxgroup.add_argument("--autofit", dest="autofit", action="store_true", 
                       help="Automatically crop output to fit data")
-  parser.add_argument("--bbox", dest="bbox", action="store", 
+  boxgroup.add_argument("--bbox", dest="bbox", action="store", 
                       metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
                       help="Crop output to fit within this bounding box")
-  parser.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
+  boxgroup.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
                       help="Center ouput on this point.  Use with --radius")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
@@ -42,6 +43,10 @@ def main():
     sys.stderr.write("Error: no files found\n")
     sys.exit(1)
 
+  #
+  # Bounding box mode:
+  # Use the bounding box provided on the command line to calculate the center point
+  #
   if args.bbox == None:
     minlat = -90
     minlon = -180
@@ -56,7 +61,12 @@ def main():
     minlon = float(bbox[1])
     maxlat = float(bbox[2])
     maxlon = float(bbox[3])
+    # FIXME: Calculate center point here
 
+  #
+  # Center mode:
+  # Use the center and radius provided on the command line to calculate the bounds
+  #
   # FIXME: doesn't handle invalid things that end in 'm', like "fm"
   if args.radius != None:
     if args.radius.endswith("mi"):
@@ -70,13 +80,16 @@ def main():
     else:
       sys.stderr.write("Error: could not parse radius\n")
       sys.exit(1)
-
   if args.center != None:
     centerlat, centerlon = map(float, args.center.split(","))
     maxlat, maxlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 45)
     minlat, minlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 225)
 
-  # First pass: figure out the bounds
+
+  #
+  # Autofit mode:
+  # Run through the files to find the bounds, then calculate the center point
+  #
   if args.autofit == True:
     if args.bbox != None:
       sys.stderr.write("Error: can't specify bounding box and autofit at the same time\n")
@@ -106,9 +119,15 @@ def main():
               maxlon = point[1]
             if point[1] < minlon:
               minlon = point[1]
+    # FIXME: calculate center point here
+    # FIXME: make sure we don't calculate min/max and center more than once
+    
 
-  # Fix the aspect ratio, expanding in one direction as needed
+  #
+  # By this point we should have the bounding box and center point calculated  
+  # Now it's time to fix the aspect ratio, expanding in one direction as needed
   # Takes latitude into account to fix proportions
+  #
   latdist = haversine(maxlat, centerlon, minlat, centerlon)
   londist = haversine(centerlat, maxlon, centerlat, minlon)
 
@@ -126,13 +145,19 @@ def main():
   minx, miny = lambertazimuthal(centerlat, centerlon, minlat, minlon)
   maxx, maxy = lambertazimuthal(centerlat, centerlon, maxlat, maxlon)
 
+  #
+  # Start printing out the postscript
+  #
+
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
   print "0 setlinewidth"  # '0' means "thinnest possible on device"
   print "1 setlinecap"    # rounded
   print "1 setlinejoin"   # rounded
   
-  # Second pass: draw the lines
+  #
+  # Run through all of the files and print out postscript commands when appropriate
+  #
   for inputfile in inputfiles:
     try:
       tree = elementtree.parse(inputfile)
@@ -146,6 +171,7 @@ def main():
     for track in gpx:
       for segment in track:
         print "newpath"
+        # FIXME: pull this out into azimuthal projection function
         for i in range(len(segment)):
           x, y = lambertazimuthal(centerlat, centerlon, segment[i][0], segment[i][1])
           if i == 0:
@@ -161,6 +187,7 @@ def main():
                                       scale(y, (miny,maxy), (0,papersize[0])))
         print "stroke"
             
+        # FIXME: pull this out into a rectilinear projection function
 #         print "newpath % Next"
 #         for i in range(len(segment)):
 #           if i == 0:
