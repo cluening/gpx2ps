@@ -5,7 +5,6 @@ import sys, os, math, glob
 import argparse
 
 # To do
-# - fix projection - use azimuthal?
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
