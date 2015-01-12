@@ -258,16 +258,12 @@ def scale(val, src, dst):
 ## x, y range from -2 to 2
 ##
 def lambertazimuthal(centlat, centlon, lat, lon):
-#  print "Starting with %f %f" % (lat, lon)
   p1, l0, p, l = map(math.radians, [centlat, centlon, lat, lon])
-#  print "As radians: %f %f" % (lat, lon)
-  
   k = math.sqrt(2/(1+math.sin(p1)*math.sin(p) + math.cos(p1)*math.cos(p)*math.cos(l-l0)))
   
   x = k * math.cos(p) * math.sin(l-l0)
   y = k * (math.cos(p1)*math.sin(p) - math.sin(p1)*math.cos(p)*math.cos(l - l0))
   
-#  print "x, y: %1.15f, %1.15f" % (x, y)
   return (x, y)
 
 ## 
