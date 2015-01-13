@@ -148,6 +148,7 @@ def main():
   # Start printing out the postscript
   #
 
+  print "%!PS"
   print "%% Generated with %s" % commandline
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
