@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import xml.etree.ElementTree as elementtree
-import sys, os, math, glob
+import sys, os, math, re, glob
 import argparse
 
 # To do
@@ -14,9 +14,16 @@ import argparse
 # - put a logo on the page (command line option for .eps file?)
 # - add landscape postscript header
 # - specify the page size?
+# - lambertazimuthal looks weird at huge scales
+
+# Tests
+# ./gpx2ps.py --inputdir ~/gps/gpx.etrex --center 35.8958238,-106.2957513 --radius 2.5mi > /tmp/foo.ps
+# ./gpx2ps.py --inputdir ~/gps/gpx.etrex --bbox 35.860472,-106.339116,35.925005,-106.255603 > /tmp/foo.ps
+# ./gpx2ps.py --inputdir ~/gps/gpx.etrex --autofit > /tmp/foo.ps
 
 def main():
   papersize = (612, 792)
+  commandline = " ".join(sys.argv)
 
   #lambertazimuthal(35.896067, -106.276954, 35.884663, -106.252836)
   #lambertazimuthal(0.0, 0.0, 0.0, 180.0) # FIXME: this one causes a divide by zero error
@@ -60,26 +67,19 @@ def main():
     minlon = float(bbox[1])
     maxlat = float(bbox[2])
     maxlon = float(bbox[3])
-    # FIXME: Calculate center point here
+    centerlat = minlat + (maxlat - minlat)/2.0
+    centerlon = minlon + (maxlon - minlon)/2.0
 
   #
   # Center mode:
   # Use the center and radius provided on the command line to calculate the bounds
   #
-  # FIXME: doesn't handle invalid things that end in 'm', like "fm"
-  if args.radius != None:
-    if args.radius.endswith("mi"):
-      radius = 1.609334 * float(args.radius[:-2])
-    elif args.radius.endswith("ft"):
-      radius = .0003048 * float(args.radius[:-2])
-    elif args.radius.endswith("km"):
-      radius = float(args.radius[:-2])
-    elif args.radius.endswith("m"):
-      radius = .001 * float(args.radius[:-1])
-    else:
-      sys.stderr.write("Error: could not parse radius\n")
-      sys.exit(1)
   if args.center != None:
+    if args.radius != None:
+      radius = radiustokm(args.radius)
+    else:
+      sys.stderr.write("Error: --center requires --radius\n")
+      sys.exit(1)
     centerlat, centerlon = map(float, args.center.split(","))
     maxlat, maxlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 45)
     minlat, minlon = radiuspoint(centerlat, centerlon, math.sqrt(2*(radius**2)), 225)
@@ -118,8 +118,8 @@ def main():
               maxlon = point[1]
             if point[1] < minlon:
               minlon = point[1]
-    # FIXME: calculate center point here
-    # FIXME: make sure we don't calculate min/max and center more than once
+    centerlat = minlat + (maxlat - minlat)/2.0
+    centerlon = minlon + (maxlon - minlon)/2.0
     
 
   #
@@ -148,6 +148,7 @@ def main():
   # Start printing out the postscript
   #
 
+  print "%% Generated with %s" % commandline
   print "90 rotate"
   print "%d %d translate" % (0, papersize[0]*-1)
   print "0 setlinewidth"  # '0' means "thinnest possible on device"
@@ -283,6 +284,33 @@ def radiuspoint(lat, lon, dist, brng):
                             math.cos(float(d)/float(R))-math.sin(lat)*math.sin(newlat))
 
   return map(math.degrees, [newlat, newlon])
+
+
+##
+## radiustokm()
+## Takes a <number><unit> string and converts it to kilometers
+##
+def radiustokm(radiusstring):
+  result = re.search("^(\d+\.?\d*)(\w+)$", radiusstring)
+
+  if result == None:
+    sys.stderr.write("Error: radius string could not be parsed\n")
+    sys.exit(1)
+
+  radius = result.group(1)
+  units = result.group(2)
+
+  if units == "mi":
+    return 1.609334 * float(radius)
+  elif units == "ft":
+    return .0003048 * float(radius)
+  elif units == "km":
+    return float(radius)
+  elif units == "m":
+    return .001 * float(radius)
+  else:
+    sys.stderr.write("Error: radius units not recognized\n")
+    sys.exit(1)
 
 
 ##
