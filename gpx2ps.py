@@ -39,7 +39,7 @@ def main():
                       metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
                       help="Crop output to fit within this bounding box")
   boxgroup.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
-                      help="Center ouput on this point.  Use with --radius")
+                      help="Center output on this point.  Use with --radius")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   args = parser.parse_args()
