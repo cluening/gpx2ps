@@ -19,6 +19,6 @@ optional arguments:
   --autofit             Automatically crop output to fit data
   --bbox MINLAT,MINLON,MAXLAT,MAXLON
                         Crop output to fit within this bounding box
-  --center LAT,LON      Center ouput on this point. Use with --radius
+  --center LAT,LON      Center output on this point. Use with --radius
   --radius RADIUS       Radius of area to include in output. Use with --center
 ```
