@@ -5,6 +5,7 @@ import sys, os, math, re, glob
 import argparse
 
 # To do
+# - add --portrait and --landscape options (with default as --landscape)
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
