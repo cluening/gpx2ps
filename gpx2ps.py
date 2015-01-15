@@ -14,7 +14,6 @@ import argparse
 # - put a logo on the page (command line option for .eps file?)
 # - add landscape postscript header
 # - specify the page size?
-# - lambertazimuthal looks weird at huge scales
 
 # Tests
 # ./gpx2ps.py --inputdir ~/gps/gpx.etrex --center 35.8958238,-106.2957513 --radius 2.5mi > /tmp/foo.ps
@@ -141,8 +140,8 @@ def main():
     maxlat = radiuspoint(centerlat, centerlon, newheight/2.0, 0)[0]
     minlat = radiuspoint(centerlat, centerlon, newheight/2.0, 180)[0]
   
-  minx, miny = lambertazimuthal(centerlat, centerlon, minlat, minlon)
-  maxx, maxy = lambertazimuthal(centerlat, centerlon, maxlat, maxlon)
+  minx, miny = millercylindrical(centerlat, centerlon, minlat, minlon)
+  maxx, maxy = millercylindrical(centerlat, centerlon, maxlat, maxlon)
 
   #
   # Start printing out the postscript
@@ -174,7 +173,7 @@ def main():
         print "newpath"
         # FIXME: pull this out into azimuthal projection function
         for i in range(len(segment)):
-          x, y = lambertazimuthal(centerlat, centerlon, segment[i][0], segment[i][1])
+          x, y = millercylindrical(centerlat, centerlon, segment[i][0], segment[i][1])
           if i == 0:
             print "%f %f moveto" % (scale(x, (minx,maxx), (0,papersize[1])),
                                     scale(y, (miny,maxy), (0,papersize[0])))
@@ -251,6 +250,19 @@ def warn(message):
 ##
 def scale(val, src, dst):
   return ((val - src[0]) / (src[1]-src[0])) * (dst[1]-dst[0]) + dst[0]
+
+
+##
+## millercylindrical()
+## Performs the miller cylindrical projection calculation
+## 
+def millercylindrical(centlat, centlon, lat, lon):
+  p1, l0, p, l = map(math.radians, [centlat, centlon, lat, lon])
+
+  x = l - l0
+  y = 1.25*math.asinh(math.tan(.8*p))
+
+  return (x, y)
 
 
 ##
