@@ -5,7 +5,6 @@ import sys, os, math, re, glob
 import argparse
 
 # To do
-# - add --portrait and --landscape options (with default as --landscape)
 # - specify output file on command line (default to sys.stdout)
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
@@ -22,7 +21,6 @@ import argparse
 # ./gpx2ps.py --inputdir ~/gps/gpx.etrex --autofit > /tmp/foo.ps
 
 def main():
-  papersize = (612, 792)
   commandline = " ".join(sys.argv)
 
   #lambertazimuthal(35.896067, -106.276954, 35.884663, -106.252836)
@@ -42,7 +40,20 @@ def main():
                       help="Center output on this point.  Use with --radius")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
+  pagegroup = parser.add_mutually_exclusive_group()
+  pagegroup.add_argument("--landscape", dest="orientation", 
+                         action="store_const", const="landscape", 
+                         default="landscape", 
+                         help="Print in landscape mode (default)")
+  pagegroup.add_argument("--portrait", dest="orientation", 
+                         action="store_const", const="portrait", 
+                         default="landscape", help="Print in portrait mode")
   args = parser.parse_args()
+
+  if args.orientation == "portrait":
+    papersize = (792, 612)
+  else:
+    papersize = (612, 792)
 
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
   if len(inputfiles) == 0:
@@ -150,8 +161,9 @@ def main():
 
   print "%!PS"
   print "%% Generated with %s" % commandline
-  print "90 rotate"
-  print "%d %d translate" % (0, papersize[0]*-1)
+  if args.orientation == "landscape":
+    print "90 rotate"
+    print "%d %d translate" % (0, papersize[0]*-1)
   print "0 setlinewidth"  # '0' means "thinnest possible on device"
   print "1 setlinecap"    # rounded
   print "1 setlinejoin"   # rounded
