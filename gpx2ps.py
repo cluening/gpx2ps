@@ -31,6 +31,10 @@ def main():
   boxgroup = parser.add_mutually_exclusive_group()
   parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
                       help="Directory that contains gpx files")
+  parser.add_argument("--fgcolor", dest="fgcolor", action="store", default="#000000",
+                      help="Foreground color in #RRGGBB format")
+  parser.add_argument("--bgcolor", dest="bgcolor", action="store", default="#FFFFFF",
+                      help="Background color in #RRGGBB format")
   boxgroup.add_argument("--autofit", dest="autofit", action="store_true", 
                       help="Automatically crop output to fit data")
   boxgroup.add_argument("--bbox", dest="bbox", action="store", 
@@ -49,6 +53,9 @@ def main():
                          action="store_const", const="portrait", 
                          default="landscape", help="Print in portrait mode")
   args = parser.parse_args()
+
+#  rgbhextofloat(args.bgcolor)
+#  sys.exit(1)
 
   if args.orientation == "portrait":
     papersize = (792, 612)
@@ -262,7 +269,7 @@ def warn(message):
 ## Scales a value from tuple src to tuple dst
 ##
 def scale(val, src, dst):
-  return ((val - src[0]) / (src[1]-src[0])) * (dst[1]-dst[0]) + dst[0]
+  return ((float(val) - float(src[0])) / (float(src[1])-float(src[0]))) * (float(dst[1])-float(dst[0])) + float(dst[0])
 
 
 ##
@@ -338,7 +345,25 @@ def radiustokm(radiusstring):
     sys.stderr.write("Error: radius units not recognized\n")
     sys.exit(1)
 
+##
+## rgbhextofloat()
+##
+def rgbhextofloat(rgb):
+  result = re.search("^#(..)(..)(..)$", rgb)
+  
+  if result == None:
+    sys.stderr.write("Error: color string '%s' could not be parsed\n" % rgb)
+    sys.exit(1)
+    
+  print "R: %s, G: %s, B: %s" % (result.group(1), result.group(2), result.group(3))
 
+  red = scale(int(result.group(1), 16), (0, 255), (0, 1))
+  green = scale(int(result.group(2), 16), (0, 255), (0, 1))
+  blue = scale(int(result.group(3), 16), (0, 255), (0, 1))
+
+  print "R: %f, G: %f, B: %f" % (red, green, blue)
+  
+  
 ##
 ##  haversine() function.  Stolen from stackoverflow
 ##
