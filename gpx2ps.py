@@ -110,9 +110,6 @@ def main():
   # Run through the files to find the bounds, then calculate the center point
   #
   if args.autofit == True:
-    if args.bbox != None:
-      sys.stderr.write("Error: can't specify bounding box and autofit at the same time\n")
-      sys.exit(1)
     minlat = 500
     minlon = 500
     maxlat = -500
@@ -167,7 +164,6 @@ def main():
   #
   # Start printing out the postscript
   #
-
   print "%!PS"
   print "%% Generated with %s" % commandline
   if args.orientation == "landscape":
