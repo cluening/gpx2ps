@@ -76,6 +76,8 @@ def main():
     minlon = -180
     maxlat = 90
     maxlon = 180
+    centerlat = 0
+    centerlon = 0
   else:
     bbox = args.bbox.split(",")
     if len(bbox) != 4:
