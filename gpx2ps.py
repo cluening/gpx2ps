@@ -54,8 +54,8 @@ def main():
                          default="landscape", help="Print in portrait mode")
   args = parser.parse_args()
 
-#  rgbhextofloat(args.bgcolor)
-#  sys.exit(1)
+  fgrgb = rgbhextofloat(args.fgcolor)
+  bgrgb = rgbhextofloat(args.bgcolor)
 
   if args.orientation == "portrait":
     papersize = (792, 612)
@@ -176,6 +176,8 @@ def main():
   print "0 setlinewidth"  # '0' means "thinnest possible on device"
   print "1 setlinecap"    # rounded
   print "1 setlinejoin"   # rounded
+  print "%f %f %f setrgbcolor clippath fill" % bgrgb  # set the background fill
+  print "%f %f %f setrgbcolor" % fgrgb                # set the foreground color
   
   #
   # Run through all of the files and print out postscript commands when appropriate
@@ -357,13 +359,11 @@ def rgbhextofloat(rgb):
     sys.stderr.write("Error: color string '%s' could not be parsed\n" % rgb)
     sys.exit(1)
     
-  print "R: %s, G: %s, B: %s" % (result.group(1), result.group(2), result.group(3))
-
   red = scale(int(result.group(1), 16), (0, 255), (0, 1))
   green = scale(int(result.group(2), 16), (0, 255), (0, 1))
   blue = scale(int(result.group(3), 16), (0, 255), (0, 1))
 
-  print "R: %f, G: %f, B: %f" % (red, green, blue)
+  return (red, green, blue)
   
   
 ##
