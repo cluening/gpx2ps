@@ -228,7 +228,6 @@ def main():
 ##
 ## doelement()
 ##
-
 def doelement(element):
 
   if element.tag.endswith("gpx"):
