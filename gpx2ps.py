@@ -6,6 +6,7 @@ import argparse
 
 # To do
 # - specify output file on command line (default to sys.stdout)
+# - specify projection on command line
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
 # - put title on page
@@ -56,6 +57,7 @@ def main():
 
   fgrgb = rgbhextofloat(args.fgcolor)
   bgrgb = rgbhextofloat(args.bgcolor)
+  projfunc = millercylindrical  # FIXME: this should come from the command line
 
   if args.orientation == "portrait":
     papersize = (792, 612)
@@ -158,8 +160,8 @@ def main():
     maxlat = radiuspoint(centerlat, centerlon, newheight/2.0, 0)[0]
     minlat = radiuspoint(centerlat, centerlon, newheight/2.0, 180)[0]
   
-  minx, miny = millercylindrical(centerlat, centerlon, minlat, minlon)
-  maxx, maxy = millercylindrical(centerlat, centerlon, maxlat, maxlon)
+  minx, miny = projfunc(centerlat, centerlon, minlat, minlon)
+  maxx, maxy = projfunc(centerlat, centerlon, maxlat, maxlon)
 
   #
   # Start printing out the postscript
@@ -193,7 +195,7 @@ def main():
         print "newpath"
         # FIXME: pull this out into azimuthal projection function
         for i in range(len(segment)):
-          x, y = millercylindrical(centerlat, centerlon, segment[i][0], segment[i][1])
+          x, y = projfunc(centerlat, centerlon, segment[i][0], segment[i][1])
           if i == 0:
             print "%f %f moveto" % (scale(x, (minx,maxx), (0,papersize[1])),
                                     scale(y, (miny,maxy), (0,papersize[0])))
@@ -206,23 +208,6 @@ def main():
               print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
                                       scale(y, (miny,maxy), (0,papersize[0])))
         print "stroke"
-            
-        # FIXME: pull this out into a equirectangular projection function
-#         print "newpath % Next"
-#         for i in range(len(segment)):
-#           if i == 0:
-#             print "%f %f moveto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
-#                                     scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))
-#           else:
-#             if (((segment[i-1][0] > minlat and segment[i-1][0] < maxlat)  and
-#                  (segment[i][0]   > minlat and segment[i][0]   < maxlat)) or
-#                 ((segment[i-1][1] > minlon and segment[i-1][1] < maxlon)  and
-#                  (segment[i][1]   > minlon and segment[i][1]   < maxlon))):
-# 
-#               print "%f %f lineto" % (scale(segment[i][1], (minlon,maxlon), (0,papersize[1])),
-#                                       scale(segment[i][0], (minlat,maxlat), (0,papersize[0])))        
-#         print "stroke"
-
 
 
 ##
@@ -270,6 +255,13 @@ def warn(message):
 def scale(val, src, dst):
   return ((float(val) - float(src[0])) / (float(src[1])-float(src[0]))) * (float(dst[1])-float(dst[0])) + float(dst[0])
 
+##
+## equirectangular()
+## Performs the equirectangular projection calculation
+##
+def equirectangular(centlat, centlon, lat, lon):
+  return (lon, lat)
+
 
 ##
 ## millercylindrical()
@@ -286,7 +278,7 @@ def millercylindrical(centlat, centlon, lat, lon):
 
 ##
 ## lambertazimuthal()
-## performs the azimuthal projection calculation
+## Performs the azimuthal projection calculation
 ## x, y range from -2 to 2
 ##
 def lambertazimuthal(centlat, centlon, lat, lon):
