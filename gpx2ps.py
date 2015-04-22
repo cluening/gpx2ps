@@ -5,6 +5,7 @@ import sys, os, math, re, glob
 import argparse
 
 # To do
+# - specify date range
 # - specify output file on command line (default to sys.stdout)
 # - specify projection on command line
 # - include presets (in a config file?)
