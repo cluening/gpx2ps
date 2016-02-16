@@ -10,12 +10,16 @@ import argparse
 # - specify projection on command line
 # - include presets (in a config file?)
 # - if line length is over a limit, use moveto instead of lineto
-# - put title on page
-#   - in lower right corner; with box around it; specify on command line
-#   - or maybe centered at the bottom
 # - put a logo on the page (command line option for .eps file?)
 # - add landscape postscript header
 # - specify the page size?
+# - handle titles
+#   - location (UL, UC, UR, LL, LC, LR)
+#   - thin and bold font selection
+#   - font size
+#   - "shadow" to separate text from map lines when there is overlap
+#   - missing font fallback
+#   - subtitle?
 
 # Tests
 # ./gpx2ps.py --inputdir ~/gps/gpx.etrex --center 35.8958238,-106.2957513 --radius 2.5mi > /tmp/foo.ps
@@ -46,6 +50,8 @@ def main():
                       help="Center output on this point.  Use with --radius")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
+  parser.add_argument("--title", dest="title", action="store",
+                      help="Optional map title.  Can be in the format 'Thin Text [Bold Text]' for two sets of contrasting text weights")
   pagegroup = parser.add_mutually_exclusive_group()
   pagegroup.add_argument("--landscape", dest="orientation", 
                          action="store_const", const="landscape", 
@@ -223,6 +229,52 @@ def main():
                                         scale(y, (miny,maxy), (0,papersize[0])))
               prevdrawn = False
         print "stroke"
+
+  if args.title != None:
+    print "% Title stuff"
+    print """/showthin {
+  /BebasNeue-Thin findfont
+  48 scalefont
+  setfont
+  show
+} def
+
+/showbold {
+  /BebasNeueRegular findfont
+  48 scalefont
+  setfont
+  show
+} def
+
+/rjmoveto {
+  772 20 moveto
+  % Thin weight text
+  /BebasNeue-Thin findfont
+  48 scalefont
+  setfont
+  stringwidth pop
+  neg 0 rmoveto
+  % Bold weight text
+  /BebasNeueRegular findfont
+  48 scalefont
+  setfont
+  stringwidth pop
+  neg 0 rmoveto
+} def"""
+
+    # First check for thin/bold combination
+    result = re.search(r'^(.*?)\[(.*?)\]$', args.title)
+    if result != None:
+      thintitlestring = result.group(1)
+      boldtitlestring = result.group(2)
+
+      print "(%s) (%s) rjmoveto" % (thintitlestring, boldtitlestring)
+      print "(%s) showthin" % (thintitlestring)
+      print "(%s) showbold" % (boldtitlestring)
+    else:
+      # Assume it is just thin
+      print "(%s) () rjmoveto" % (args.title)
+      print "(%s) showthin" % (args.title)
 
 
 ##
