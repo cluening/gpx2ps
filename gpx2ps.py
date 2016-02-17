@@ -246,6 +246,22 @@ def main():
   show
 } def
 
+/showshadowthin {
+  /BebasNeue-Thin findfont
+  48 scalefont
+  setfont
+  false charpath
+  15 setlinewidth stroke
+} def
+
+/showshadowbold {
+  /BebasNeueRegular findfont
+  48 scalefont
+  setfont
+  false charpath
+  15 setlinewidth stroke
+} def
+
 /rjmoveto {
   772 20 moveto
   % Thin weight text
@@ -268,12 +284,22 @@ def main():
       thintitlestring = result.group(1)
       boldtitlestring = result.group(2)
 
-      print "(%s) (%s) rjmoveto" % (thintitlestring, boldtitlestring)
+      print "%f %f %f setrgbcolor" % (bgrgb)
+      print "(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring)
+      print "(%s) showshadowthin" % (thintitlestring)
+      print "(%s) () rjmoveto" % (boldtitlestring)
+      print "(%s) showshadowbold" % (boldtitlestring)
+      print "%f %f %f setrgbcolor" % (fgrgb)
+      print "(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring)
       print "(%s) showthin" % (thintitlestring)
       print "(%s) showbold" % (boldtitlestring)
     else:
-      # Assume it is just thin
-      print "(%s) () rjmoveto" % (args.title)
+      # Assume it is just thin  FIXME: should probably allow for just bold too
+      print "%f %f %f setrgbcolor" % (bgrgb)
+      print "() (%s) rjmoveto" % (args.title)
+      print "(%s) showshadowthin" % (args.title)
+      print "%f %f %f setrgbcolor" % (fgrgb)
+      print "() (%s) rjmoveto" % (args.title)
       print "(%s) showthin" % (args.title)
 
 
