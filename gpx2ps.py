@@ -199,36 +199,38 @@ def main():
     print "%% File: %s" % inputfile
     for track in gpx:
       for segment in track:
-        print "newpath"
+        #print "newpath"
         prevdrawn = False
-        for i in range(len(segment)):
+        newpathwritten = False
+        for i in range(1, len(segment)):
           x, y = projfunc(centerlat, centerlon, segment[i][0], segment[i][1])
-          if i == 0:
-            # For the first point, we just want to move to its position
-            print "%f %f moveto" % (scale(x, (minx,maxx), (0,papersize[1])),
+          # Check to see if this point is in the bounding box
+          if ((segment[i][0] > minlat and segment[i][0] < maxlat) and
+              (segment[i][1] > minlon and segment[i][1] < maxlon)):
+            # We're in the bounding box.  If the previous point was not drawn, we need 
+            # to moveto it.
+            if prevdrawn == False:
+              if newpathwritten == False:
+                # This is the start of a new path
+                print "newpath"
+                newpathwritten = True
+              px, py = projfunc(centerlat, centerlon, segment[i-1][0], segment[i-1][1])
+              print "%f %f moveto" % (scale(px, (minx,maxx), (0,papersize[1])),
+                                      scale(py, (miny,maxy), (0,papersize[0])))
+            # Always draw the current point since it is in the bounding box (see above)
+            print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
                                     scale(y, (miny,maxy), (0,papersize[0])))
+            prevdrawn = True
           else:
-            # Check to see if this point is in the bounding box
-            if ((segment[i][0] > minlat and segment[i][0] < maxlat) and
-                (segment[i][1] > minlon and segment[i][1] < maxlon)):
-              # We're in the bounding box.  If the previous point was not drawn, we need 
-              # to moveto it.
-              if prevdrawn == False:
-                px, py = projfunc(centerlat, centerlon, segment[i-1][0], segment[i-1][1])
-                print "%f %f moveto" % (scale(px, (minx,maxx), (0,papersize[1])),
-                                        scale(py, (miny,maxy), (0,papersize[0])))
-              # Always draw the current point since it is in the bounding box (see above)
+            # We're not in the bounding box.  But if the previous point was drawn, we 
+            # need a line out to this point
+            if prevdrawn == True:
               print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
                                       scale(y, (miny,maxy), (0,papersize[0])))
-              prevdrawn = True
-            else:
-              # We're not in the bounding box.  But if the previous point was drawn, we 
-              # need a line out to this point
-              if prevdrawn == True:
-                print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
-                                        scale(y, (miny,maxy), (0,papersize[0])))
-              prevdrawn = False
-        print "stroke"
+            prevdrawn = False
+        if newpathwritten == True:
+          # If we started a newpath, we need to stroke it here
+          print "stroke"
 
   if args.title != None:
     print "% Title stuff"
