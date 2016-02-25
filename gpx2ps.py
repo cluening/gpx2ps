@@ -9,9 +9,10 @@ import argparse
 # - specify output file on command line (default to sys.stdout)
 # - specify projection on command line
 # - include presets (in a config file?)
+#   - actually, probably add a '--replicate' option to read options from an existing .ps file (command line options take precedence and override what's in the file)
 # - if line length is over a limit, use moveto instead of lineto
 # - put a logo on the page (command line option for .eps file?)
-# - add landscape postscript header
+# - add landscape postscript header (really, add better postscript headers in general)
 # - specify the page size?
 # - handle titles
 #   - location (UL, UC, UR, LL, LC, LR)
@@ -52,6 +53,10 @@ def main():
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
                       help="Optional map title.  Can be in the format 'Thin Text [Bold Text]' for two sets of contrasting text weights")
+  parser.add_argument("--thinfont", dest="thinfont", action="store", default="Helvetica-Light",
+                      help="Postscript name of font to use for thin text.  Default: Helvetica-Light")
+  parser.add_argument("--boldfont", dest="boldfont", action="store", default="Helvetica-Bold",
+                      help="Postscript name of font to use for bold text.  Default: Helvetica-Bold")
   pagegroup = parser.add_mutually_exclusive_group()
   pagegroup.add_argument("--landscape", dest="orientation", 
                          action="store_const", const="landscape", 
@@ -235,21 +240,21 @@ def main():
   if args.title != None:
     print "% Title stuff"
     print """/showthin {
-  /BebasNeue-Thin findfont
+  /%s findfont
   48 scalefont
   setfont
   show
 } def
 
 /showbold {
-  /BebasNeueRegular findfont
+  /%s findfont
   48 scalefont
   setfont
   show
 } def
 
 /showshadowthin {
-  /BebasNeue-Thin findfont
+  /%s findfont
   48 scalefont
   setfont
   false charpath
@@ -257,7 +262,7 @@ def main():
 } def
 
 /showshadowbold {
-  /BebasNeueRegular findfont
+  /%s findfont
   48 scalefont
   setfont
   false charpath
@@ -266,19 +271,33 @@ def main():
 
 /rjmoveto {
   772 20 moveto
-  % Thin weight text
-  /BebasNeue-Thin findfont
+  %% Thin weight text
+  /%s findfont
   48 scalefont
   setfont
   stringwidth pop
   neg 0 rmoveto
-  % Bold weight text
-  /BebasNeueRegular findfont
+  %% Bold weight text
+  /%s findfont
   48 scalefont
   setfont
   stringwidth pop
   neg 0 rmoveto
-} def"""
+} def
+
+/rjmovetothinonly {
+  772 20 moveto
+  %% Thin weight text
+  /%s findfont
+  48 scalefont
+  setfont
+  stringwidth pop
+  neg 0 rmoveto
+
+} def
+""" % (args.thinfont, args.boldfont, args.thinfont, args.boldfont, args.thinfont, args.boldfont, args.thinfont)
+
+    #FIXME: Should only include the bold function if we need to use a bold font
 
     # First check for thin/bold combination
     result = re.search(r'^(.*?)\[(.*?)\]$', args.title)
@@ -298,10 +317,10 @@ def main():
     else:
       # Assume it is just thin  FIXME: should probably allow for just bold too
       print "%f %f %f setrgbcolor" % (bgrgb)
-      print "() (%s) rjmoveto" % (args.title)
+      print "(%s) rjmovetothinonly" % (args.title)
       print "(%s) showshadowthin" % (args.title)
       print "%f %f %f setrgbcolor" % (fgrgb)
-      print "() (%s) rjmoveto" % (args.title)
+      print "(%s) rjmovetothinonly" % (args.title)
       print "(%s) showthin" % (args.title)
 
 
