@@ -16,10 +16,6 @@ import argparse
 # - specify the page size?
 # - handle titles
 #   - location (UL, UC, UR, LL, LC, LR)
-#   - thin and bold font selection
-#   - font size
-#   - "shadow" to separate text from map lines when there is overlap
-#   - missing font fallback
 #   - subtitle?
 
 # Tests
@@ -53,6 +49,8 @@ def main():
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
                       help="Optional map title.  Can be in the format 'Thin Text [Bold Text]' for two sets of contrasting text weights")
+  parser.add_argument("--fontsize", dest="fontsize", action="store", type=int, default=48,
+                      help="Font size in points")
   parser.add_argument("--thinfont", dest="thinfont", action="store", default="Helvetica-Light",
                       help="Postscript name of font to use for thin text.  Default: Helvetica-Light")
   parser.add_argument("--boldfont", dest="boldfont", action="store", default="Helvetica-Bold",
@@ -61,7 +59,7 @@ def main():
   pagegroup.add_argument("--landscape", dest="orientation", 
                          action="store_const", const="landscape", 
                          default="landscape", 
-                         help="Print in landscape mode (default)")
+                         help="Print in landscape mode.  Default.")
   pagegroup.add_argument("--portrait", dest="orientation", 
                          action="store_const", const="portrait", 
                          default="landscape", help="Print in portrait mode")
@@ -239,47 +237,52 @@ def main():
 
   if args.title != None:
     print "% Title stuff"
-    print """/showthin {
-  /%s findfont
-  48 scalefont
+    print """/thinfont /%s def
+/boldfont /%s def
+/fontsize %d def
+/shadowstroke fontsize 3 div def
+
+/showthin {
+  thinfont findfont
+  fontsize scalefont
   setfont
   show
 } def
 
 /showbold {
-  /%s findfont
-  48 scalefont
+  boldfont findfont
+  fontsize scalefont
   setfont
   show
 } def
 
 /showshadowthin {
-  /%s findfont
-  48 scalefont
+  thinfont findfont
+  fontsize scalefont
   setfont
   false charpath
-  15 setlinewidth stroke
+  shadowstroke setlinewidth stroke
 } def
 
 /showshadowbold {
-  /%s findfont
-  48 scalefont
+  boldfont findfont
+  fontsize scalefont
   setfont
   false charpath
-  15 setlinewidth stroke
+  shadowstroke setlinewidth stroke
 } def
 
 /rjmoveto {
   772 20 moveto
   %% Thin weight text
-  /%s findfont
-  48 scalefont
+  thinfont findfont
+  fontsize scalefont
   setfont
   stringwidth pop
   neg 0 rmoveto
   %% Bold weight text
-  /%s findfont
-  48 scalefont
+  boldfont findfont
+  fontsize scalefont
   setfont
   stringwidth pop
   neg 0 rmoveto
@@ -288,14 +291,14 @@ def main():
 /rjmovetothinonly {
   772 20 moveto
   %% Thin weight text
-  /%s findfont
-  48 scalefont
+  thinfont findfont
+  fontsize scalefont
   setfont
   stringwidth pop
   neg 0 rmoveto
 
 } def
-""" % (args.thinfont, args.boldfont, args.thinfont, args.boldfont, args.thinfont, args.boldfont, args.thinfont)
+""" % (args.thinfont, args.boldfont, args.fontsize)
 
     #FIXME: Should only include the bold function if we need to use a bold font
 
