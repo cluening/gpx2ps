@@ -3,6 +3,7 @@
 import xml.etree.ElementTree as elementtree
 import sys, os, math, re, glob
 import argparse
+import json
 
 # To do
 # - specify date range
@@ -178,6 +179,7 @@ def main():
   #
   print "%!PS"
   print "%% Generated with %s" % commandline
+  print "%% argumentlist %s" % (json.dumps(vars(args)))
   if args.orientation == "landscape":
     print "90 rotate"
     print "%d %d translate" % (0, papersize[0]*-1)
