@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import xml.etree.ElementTree as elementtree
 import sys, os, math, re, glob
 import argparse
@@ -177,17 +179,17 @@ def main():
   #
   # Start printing out the postscript
   #
-  print "%!PS"
-  print "%% Generated with %s" % commandline
-  print "%% argumentlist %s" % (json.dumps(vars(args)))
+  print("%!PS")
+  print("%% Generated with %s" % commandline)
+  print("%% argumentlist %s" % (json.dumps(vars(args))))
   if args.orientation == "landscape":
-    print "90 rotate"
-    print "%d %d translate" % (0, papersize[0]*-1)
-  print "0 setlinewidth"  # '0' means "thinnest possible on device"
-  print "1 setlinecap"    # rounded
-  print "1 setlinejoin"   # rounded
-  print "%f %f %f setrgbcolor clippath fill" % bgrgb  # set the background fill
-  print "%f %f %f setrgbcolor" % fgrgb                # set the foreground color
+    print("90 rotate")
+    print("%d %d translate" % (0, papersize[0]*-1))
+  print("0 setlinewidth")  # '0' means "thinnest possible on device"
+  print("1 setlinecap")    # rounded
+  print("1 setlinejoin")   # rounded
+  print("%f %f %f setrgbcolor clippath fill") % bgrgb # set the background fill
+  print("%f %f %f setrgbcolor") % fgrgb               # set the foreground color
   
   #
   # Run through all of the files and print out postscript commands when appropriate
@@ -201,10 +203,10 @@ def main():
 
     gpx = doelement(tree.getroot())
   
-    print "%% File: %s" % inputfile
+    print("%% File: %s" % inputfile)
     for track in gpx:
       for segment in track:
-        #print "newpath"
+        #print("newpath")
         prevdrawn = False
         newpathwritten = False
         for i in range(1, len(segment)):
@@ -217,29 +219,29 @@ def main():
             if prevdrawn == False:
               if newpathwritten == False:
                 # This is the start of a new path
-                print "newpath"
+                print("newpath")
                 newpathwritten = True
               px, py = projfunc(centerlat, centerlon, segment[i-1][0], segment[i-1][1])
-              print "%f %f moveto" % (scale(px, (minx,maxx), (0,papersize[1])),
-                                      scale(py, (miny,maxy), (0,papersize[0])))
+              print("%f %f moveto" % (scale(px, (minx,maxx), (0,papersize[1])),
+                                      scale(py, (miny,maxy), (0,papersize[0]))))
             # Always draw the current point since it is in the bounding box (see above)
-            print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
-                                    scale(y, (miny,maxy), (0,papersize[0])))
+            print("%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
+                                    scale(y, (miny,maxy), (0,papersize[0]))))
             prevdrawn = True
           else:
             # We're not in the bounding box.  But if the previous point was drawn, we 
             # need a line out to this point
             if prevdrawn == True:
-              print "%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
-                                      scale(y, (miny,maxy), (0,papersize[0])))
+              print("%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
+                                      scale(y, (miny,maxy), (0,papersize[0]))))
             prevdrawn = False
         if newpathwritten == True:
           # If we started a newpath, we need to stroke it here
-          print "stroke"
+          print("stroke")
 
   if args.title != None:
-    print "% Title stuff"
-    print """/thinfont /%s def
+    print("% Title stuff")
+    print("""/thinfont /%s def
 /boldfont /%s def
 /fontsize %d def
 /shadowstroke fontsize 3 div def
@@ -300,7 +302,7 @@ def main():
   neg 0 rmoveto
 
 } def
-""" % (args.thinfont, args.boldfont, args.fontsize)
+""" % (args.thinfont, args.boldfont, args.fontsize))
 
     #FIXME: Should only include the bold function if we need to use a bold font
 
@@ -310,23 +312,23 @@ def main():
       thintitlestring = result.group(1)
       boldtitlestring = result.group(2)
 
-      print "%f %f %f setrgbcolor" % (bgrgb)
-      print "(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring)
-      print "(%s) showshadowthin" % (thintitlestring)
-      print "(%s) () rjmoveto" % (boldtitlestring)
-      print "(%s) showshadowbold" % (boldtitlestring)
-      print "%f %f %f setrgbcolor" % (fgrgb)
-      print "(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring)
-      print "(%s) showthin" % (thintitlestring)
-      print "(%s) showbold" % (boldtitlestring)
+      print("%f %f %f setrgbcolor" % (bgrgb))
+      print("(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring))
+      print("(%s) showshadowthin" % (thintitlestring))
+      print("(%s) () rjmoveto" % (boldtitlestring))
+      print("(%s) showshadowbold" % (boldtitlestring))
+      print("%f %f %f setrgbcolor" % (fgrgb))
+      print("(%s) (%s) rjmoveto" % (boldtitlestring, thintitlestring))
+      print("(%s) showthin" % (thintitlestring))
+      print("(%s) showbold" % (boldtitlestring))
     else:
       # Assume it is just thin  FIXME: should probably allow for just bold too
-      print "%f %f %f setrgbcolor" % (bgrgb)
-      print "(%s) rjmovetothinonly" % (args.title)
-      print "(%s) showshadowthin" % (args.title)
-      print "%f %f %f setrgbcolor" % (fgrgb)
-      print "(%s) rjmovetothinonly" % (args.title)
-      print "(%s) showthin" % (args.title)
+      print("%f %f %f setrgbcolor" % (bgrgb))
+      print("(%s) rjmovetothinonly" % (args.title))
+      print("(%s) showshadowthin" % (args.title))
+      print("%f %f %f setrgbcolor" % (fgrgb))
+      print("(%s) rjmovetothinonly" % (args.title))
+      print("(%s) showthin" % (args.title))
 
 
 ##
