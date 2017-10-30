@@ -188,8 +188,8 @@ def main():
   print("0 setlinewidth")  # '0' means "thinnest possible on device"
   print("1 setlinecap")    # rounded
   print("1 setlinejoin")   # rounded
-  print("%f %f %f setrgbcolor clippath fill") % bgrgb # set the background fill
-  print("%f %f %f setrgbcolor") % fgrgb               # set the foreground color
+  print("%f %f %f setrgbcolor clippath fill" % bgrgb) # set the background fill
+  print("%f %f %f setrgbcolor" % fgrgb)               # set the foreground color
   
   #
   # Run through all of the files and print out postscript commands when appropriate
@@ -428,7 +428,10 @@ def radiuspoint(lat, lon, dist, brng):
   newlon = lon + math.atan2(math.sin(brng)*math.sin(float(d)/float(R))*math.cos(lat),
                             math.cos(float(d)/float(R))-math.sin(lat)*math.sin(newlat))
 
-  return map(math.degrees, [newlat, newlon])
+  newlat = math.degrees(newlat)
+  newlon = math.degrees(newlon)
+
+  return([newlat, newlon])
 
 
 ##
