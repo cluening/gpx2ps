@@ -11,8 +11,6 @@ import json
 # - specify date range
 # - specify output file on command line (default to sys.stdout)
 # - specify projection on command line
-# - include presets (in a config file?)
-#   - actually, probably add a '--replicate' option to read options from an existing .ps file (command line options take precedence and override what's in the file)
 # - if line length is over a limit, use moveto instead of lineto
 # - put a logo on the page (command line option for .eps file?)
 # - add landscape postscript header (really, add better postscript headers in general)
@@ -35,6 +33,8 @@ def main():
 
   parser = argparse.ArgumentParser(description="In goes the GPX, out goes the PS")
   boxgroup = parser.add_mutually_exclusive_group()
+  parser.add_argument("--replicate", dest="replicate", action="store",
+                      help="Use settings stored in a previously generated .ps file")
   parser.add_argument("--inputdir", dest="inputdir", action="store", default=".",
                       help="Directory that contains gpx files")
   parser.add_argument("--fgcolor", dest="fgcolor", action="store", default="#000000",
@@ -67,6 +67,41 @@ def main():
                          action="store_const", const="portrait", 
                          default="landscape", help="Print in portrait mode")
   args = parser.parse_args()
+
+  if args.replicate != None:
+    foundargs = False
+    try:
+      infile = open(args.replicate)
+    except IOError as detail:
+      sys.stderr.write("Error: " + str(detail) + "\n")
+      sys.exit(1)
+    for line in infile:
+      if line.startswith("% argumentlist "):
+        foundargs = True
+        break
+    infile.close()
+
+    if not foundargs:
+        sys.stderr.write("Error: no argument line found\n")
+        exit(1)
+
+    argumentlist = line[15:]
+    arguments = json.loads(argumentlist)
+
+    newargv = []
+    for key in arguments:
+      if arguments[key] is True:
+        newargv.append("--" + key)
+      if arguments[key] is False:
+        continue
+      if arguments[key] is None:
+        continue
+      if key == "orientation":  # Hacky: "--landscape" and "--portait" end up in the "orientation" variable
+        newargv.append("--" + arguments[key])
+      else:
+        newargv.append("--" + key)
+        newargv.append(str(arguments[key]))
+    args = parser.parse_args(newargv)
 
   fgrgb = rgbhextofloat(args.fgcolor)
   bgrgb = rgbhextofloat(args.bgcolor)
