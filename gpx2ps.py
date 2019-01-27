@@ -41,13 +41,15 @@ def main():
                       help="Foreground color in #RRGGBB format")
   parser.add_argument("--bgcolor", dest="bgcolor", action="store", default="#FFFFFF",
                       help="Background color in #RRGGBB format")
-  boxgroup.add_argument("--autofit", dest="autofit", action="store_true", 
+  boxgroup.add_argument("--autofit", dest="autofit", action="store_true",
                       help="Automatically crop output to fit data")
-  boxgroup.add_argument("--bbox", dest="bbox", action="store", 
-                      metavar="MINLAT,MINLON,MAXLAT,MAXLON", 
+  boxgroup.add_argument("--bbox", dest="bbox", action="store",
+                      metavar="MINLAT,MINLON,MAXLAT,MAXLON",
                       help="Crop output to fit within this bounding box")
-  boxgroup.add_argument("--center", dest="center", action="store", metavar="LAT,LON", 
+  boxgroup.add_argument("--center", dest="center", action="store", metavar="LAT,LON",
                       help="Center output on this point.  Use with --radius")
+  boxgroup.add_argument("--tiles", dest="tiles", action="store_true",
+                      help="Render in tile mode, with one track per tile")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
@@ -59,12 +61,12 @@ def main():
   parser.add_argument("--boldfont", dest="boldfont", action="store", default="Helvetica-Bold",
                       help="Postscript name of font to use for bold text.  Default: Helvetica-Bold")
   pagegroup = parser.add_mutually_exclusive_group()
-  pagegroup.add_argument("--landscape", dest="orientation", 
-                         action="store_const", const="landscape", 
-                         default="landscape", 
+  pagegroup.add_argument("--landscape", dest="orientation",
+                         action="store_const", const="landscape",
+                         default="landscape",
                          help="Print in landscape mode.  Default.")
-  pagegroup.add_argument("--portrait", dest="orientation", 
-                         action="store_const", const="portrait", 
+  pagegroup.add_argument("--portrait", dest="orientation",
+                         action="store_const", const="portrait",
                          default="landscape", help="Print in portrait mode")
   args = parser.parse_args()
 
@@ -172,7 +174,7 @@ def main():
         continue
 
       gpx = doelement(tree.getroot())
-        
+
       # Find minimum and maximum latitude and longitude
       for track in gpx:
         for segment in track:
@@ -187,10 +189,22 @@ def main():
               minlon = point[1]
     centerlat = minlat + (maxlat - minlat)/2.0
     centerlon = minlon + (maxlon - minlon)/2.0
-    
 
   #
-  # By this point we should have the bounding box and center point calculated  
+  # Tiles mode
+  # Do... something
+  #
+  if args.tiles == True:
+    projfunc = equirectangular
+    # Need:
+    # minlat, minlon, maxlat, maxlon, centerlat, centerlon
+    minlat = -500 # FIXME: these probably aren't actually needed
+    minlon = -500
+    maxlat = 500
+    maxlon = 500
+
+  #
+  # By this point we should have the bounding box and center point calculated
   # Now it's time to fix the aspect ratio, expanding in one direction as needed
   # Takes latitude into account to fix proportions
   #
@@ -207,7 +221,9 @@ def main():
     newheight = width / (float(papersize[1])/float(papersize[0]))
     maxlat = radiuspoint(centerlat, centerlon, newheight/2.0, 0)[0]
     minlat = radiuspoint(centerlat, centerlon, newheight/2.0, 180)[0]
-  
+
+  # Project the minimum and maximum latitude and longitude values onto a
+  # cartesian grid
   minx, miny = projfunc(centerlat, centerlon, minlat, minlon)
   maxx, maxy = projfunc(centerlat, centerlon, maxlat, maxlon)
 
@@ -225,10 +241,19 @@ def main():
   print("1 setlinejoin")   # rounded
   print("%f %f %f setrgbcolor clippath fill" % bgrgb) # set the background fill
   print("%f %f %f setrgbcolor" % fgrgb)               # set the foreground color
-  
+
   #
   # Run through all of the files and print out postscript commands when appropriate
   #
+
+  # FIXME
+  xtiles = 4
+  ytiles = 2
+  (xtiles, ytiles) = tile(380, 11, 8.5)
+
+  # FIXME
+  xoffset = 0
+  yoffset = 1 - ytiles
   for inputfile in inputfiles:
     try:
       tree = elementtree.parse(inputfile)
@@ -237,9 +262,33 @@ def main():
       continue
 
     gpx = doelement(tree.getroot())
-  
+
+
+
     print("%% File: %s" % inputfile)
     for track in gpx:
+
+      if args.tiles is True:
+        # In tiles mode, find the minimum an maximum lon/lat for each track
+        minlat = 500
+        minlon = 500
+        maxlat = -500
+        maxlon = -500
+        for segment in track:
+          for point in segment:
+            if point[0] > maxlat:
+              maxlat = point[0]
+            if point[0] < minlat:
+              minlat = point[0]
+            if point[1] > maxlon:
+              maxlon = point[1]
+            if point[1] < minlon:
+              minlon = point[1]
+        centerlat = minlat + (maxlat - minlat)/2.0
+        centerlon = minlon + (maxlon - minlon)/2.0
+        minx, miny = projfunc(centerlat, centerlon, minlat, minlon)
+        maxx, maxy = projfunc(centerlat, centerlon, maxlat, maxlon)
+
       for segment in track:
         #print("newpath")
         prevdrawn = False
@@ -249,7 +298,7 @@ def main():
           # Check to see if this point is in the bounding box
           if ((segment[i][0] > minlat and segment[i][0] < maxlat) and
               (segment[i][1] > minlon and segment[i][1] < maxlon)):
-            # We're in the bounding box.  If the previous point was not drawn, we need 
+            # We're in the bounding box.  If the previous point was not drawn, we need
             # to moveto it.
             if prevdrawn == False:
               if newpathwritten == False:
@@ -257,22 +306,42 @@ def main():
                 print("newpath")
                 newpathwritten = True
               px, py = projfunc(centerlat, centerlon, segment[i-1][0], segment[i-1][1])
-              print("%f %f moveto" % (scale(px, (minx,maxx), (0,papersize[1])),
-                                      scale(py, (miny,maxy), (0,papersize[0]))))
+              print("%f %f moveto" % (scale(px,
+                                            (minx, maxx),
+                                            (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                      scale(py,
+                                            (miny ,maxy),
+                                            (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                           ))
             # Always draw the current point since it is in the bounding box (see above)
-            print("%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
-                                    scale(y, (miny,maxy), (0,papersize[0]))))
+            print("%f %f lineto" % (scale(x,
+                                          (minx, maxx),
+                                          (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                    scale(y,
+                                          (miny, maxy),
+                                          (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                         ))
             prevdrawn = True
           else:
-            # We're not in the bounding box.  But if the previous point was drawn, we 
+            # We're not in the bounding box.  But if the previous point was drawn, we
             # need a line out to this point
             if prevdrawn == True:
-              print("%f %f lineto" % (scale(x, (minx,maxx), (0,papersize[1])),
-                                      scale(y, (miny,maxy), (0,papersize[0]))))
+              print("%f %f lineto" % (scale(x,
+                                            (minx, maxx),
+                                            (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                      scale(y,
+                                            (miny, maxy),
+                                            (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                           ))
             prevdrawn = False
         if newpathwritten == True:
           # If we started a newpath, we need to stroke it here
           print("stroke")
+
+      xoffset += 1
+      if xoffset >= xtiles:
+        xoffset = 0
+        yoffset += 1
 
   if args.title != None:
     print("% Title stuff")
@@ -390,7 +459,7 @@ def doelement(element):
     for child in element:
       segment.append(doelement(child))
     return segment
-      
+
   if element.tag.endswith("trkpt"):
     lat = float(element.attrib['lat'])
     lon = float(element.attrib['lon'])
@@ -422,7 +491,7 @@ def equirectangular(centlat, centlon, lat, lon):
 ##
 ## millercylindrical()
 ## Performs the miller cylindrical projection calculation
-## 
+##
 def millercylindrical(centlat, centlon, lat, lon):
   p1, l0, p, l = map(math.radians, [centlat, centlon, lat, lon])
 
@@ -440,13 +509,13 @@ def millercylindrical(centlat, centlon, lat, lon):
 def lambertazimuthal(centlat, centlon, lat, lon):
   p1, l0, p, l = map(math.radians, [centlat, centlon, lat, lon])
   k = math.sqrt(2/(1+math.sin(p1)*math.sin(p) + math.cos(p1)*math.cos(p)*math.cos(l-l0)))
-  
+
   x = k * math.cos(p) * math.sin(l-l0)
   y = k * (math.cos(p1)*math.sin(p) - math.sin(p1)*math.cos(p)*math.cos(l - l0))
-  
+
   return (x, y)
 
-## 
+##
 ## radiuspoint()
 ## Given a point, a radius, and a direction, find the lat/lon of the new point
 ## lat, lon, and bearing all in degrees; distance in kilometers
@@ -458,7 +527,7 @@ def radiuspoint(lat, lon, dist, brng):
   lat, lon = map(math.radians, [lat, lon])
   brng = math.radians(brng)
 
-  newlat = math.asin(math.sin(lat)*math.cos(float(d)/float(R)) + 
+  newlat = math.asin(math.sin(lat)*math.cos(float(d)/float(R)) +
                      math.cos(lat)*math.sin(float(d)/float(R))*math.cos(brng) )
   newlon = lon + math.atan2(math.sin(brng)*math.sin(float(d)/float(R))*math.cos(lat),
                             math.cos(float(d)/float(R))-math.sin(lat)*math.sin(newlat))
@@ -500,38 +569,48 @@ def radiustokm(radiusstring):
 ##
 def rgbhextofloat(rgb):
   result = re.search("^#(..)(..)(..)$", rgb)
-  
+
   if result == None:
     sys.stderr.write("Error: color string '%s' could not be parsed\n" % rgb)
     sys.exit(1)
-    
+
   red = scale(int(result.group(1), 16), (0, 255), (0, 1))
   green = scale(int(result.group(2), 16), (0, 255), (0, 1))
   blue = scale(int(result.group(3), 16), (0, 255), (0, 1))
 
   return (red, green, blue)
-  
-  
+
+
 ##
 ##  haversine() function.  Stolen from stackoverflow
 ##
 def haversine(lat1, lon1, lat2, lon2):
   """
-  Calculate the great circle distance between two points 
+  Calculate the great circle distance between two points
   on the earth (specified in decimal degrees)
   """
-  # convert decimal degrees to radians 
+  # convert decimal degrees to radians
   lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
 
-  # haversine formula 
-  dlon = lon2 - lon1 
-  dlat = lat2 - lat1 
+  # haversine formula
+  dlon = lon2 - lon1
+  dlat = lat2 - lat1
   a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-  c = 2 * math.asin(math.sqrt(a)) 
+  c = 2 * math.asin(math.sqrt(a))
 
   # 6367 km is the radius of the Earth
   km = 6367 * c
-  return km 
+  return km
+
+def tile(n, w, h):
+  x = 1
+  y = 1
+  while x * y < n:
+    if float(x)/float(y) < float(w)/float(h):
+      x += 1
+    else:
+      y += 1
+  return (x, y)
 
 
 if __name__ == "__main__":
