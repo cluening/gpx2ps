@@ -115,6 +115,7 @@ def main():
     papersize = (612, 792)
 
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
+  inputfiles.sort()
   if len(inputfiles) == 0:
     sys.stderr.write("Error: no files found\n")
     sys.exit(1)
@@ -249,7 +250,7 @@ def main():
   # FIXME
   xtiles = 4
   ytiles = 2
-  (xtiles, ytiles) = tile(380, 11, 8.5)
+  (xtiles, ytiles) = tile(len(inputfiles), papersize[1], papersize[0])
 
   # FIXME
   xoffset = 0
