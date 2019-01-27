@@ -114,6 +114,9 @@ def main():
   else:
     papersize = (612, 792)
 
+    # FIXME
+    margin = 2
+
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
   inputfiles.sort()
   if len(inputfiles) == 0:
@@ -309,18 +312,18 @@ def main():
               px, py = projfunc(centerlat, centerlon, segment[i-1][0], segment[i-1][1])
               print("%f %f moveto" % (scale(px,
                                             (minx, maxx),
-                                            (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                            (0 + margin, papersize[1]/xtiles - margin)) + xoffset*(papersize[1]/xtiles),
                                       scale(py,
                                             (miny ,maxy),
-                                            (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                            (0 + margin, papersize[0]/ytiles - margin)) - yoffset*(papersize[0]/ytiles)
                                            ))
             # Always draw the current point since it is in the bounding box (see above)
             print("%f %f lineto" % (scale(x,
                                           (minx, maxx),
-                                          (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                          (0 + margin, papersize[1]/xtiles - margin)) + xoffset*(papersize[1]/xtiles),
                                     scale(y,
                                           (miny, maxy),
-                                          (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                          (0 + margin, papersize[0]/ytiles - margin)) - yoffset*(papersize[0]/ytiles)
                                          ))
             prevdrawn = True
           else:
@@ -329,10 +332,10 @@ def main():
             if prevdrawn == True:
               print("%f %f lineto" % (scale(x,
                                             (minx, maxx),
-                                            (0, papersize[1]/xtiles)) + xoffset*(papersize[1]/xtiles),
+                                            (0 + margin, papersize[1]/xtiles - margin)) + xoffset*(papersize[1]/xtiles),
                                       scale(y,
                                             (miny, maxy),
-                                            (0, papersize[0]/ytiles)) - yoffset*(papersize[0]/ytiles)
+                                            (0 + margin, papersize[0]/ytiles - margin)) - yoffset*(papersize[0]/ytiles)
                                            ))
             prevdrawn = False
         if newpathwritten == True:
