@@ -109,13 +109,15 @@ def main():
   bgrgb = rgbhextofloat(args.bgcolor)
   projfunc = millercylindrical  # FIXME: this should come from the command line
 
+  xtiles = 1
+  ytiles = 1
+
   if args.orientation == "portrait":
     papersize = (792, 612)
   else:
     papersize = (612, 792)
 
-    # FIXME
-    margin = 2
+  margin = 0
 
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
   inputfiles.sort()
@@ -196,16 +198,12 @@ def main():
 
   #
   # Tiles mode
-  # Do... something
+  # FIXME: Do... something
   #
   if args.tiles == True:
+    margin = 2
     projfunc = equirectangular
-    # Need:
-    # minlat, minlon, maxlat, maxlon, centerlat, centerlon
-    minlat = -500 # FIXME: these probably aren't actually needed
-    minlon = -500
-    maxlat = 500
-    maxlon = 500
+    (xtiles, ytiles) = tile(len(inputfiles), papersize[1], papersize[0])
 
   #
   # By this point we should have the bounding box and center point calculated
@@ -250,10 +248,7 @@ def main():
   # Run through all of the files and print out postscript commands when appropriate
   #
 
-  # FIXME
-  xtiles = 4
-  ytiles = 2
-  (xtiles, ytiles) = tile(len(inputfiles), papersize[1], papersize[0])
+
 
   # FIXME
   xoffset = 0
@@ -342,10 +337,11 @@ def main():
           # If we started a newpath, we need to stroke it here
           print("stroke")
 
-      xoffset += 1
-      if xoffset >= xtiles:
-        xoffset = 0
-        yoffset += 1
+      if args.tiles is True:
+        xoffset += 1
+        if xoffset >= xtiles:
+          xoffset = 0
+          yoffset += 1
 
   if args.title != None:
     print("% Title stuff")
