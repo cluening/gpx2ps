@@ -248,9 +248,6 @@ def main():
   # Run through all of the files and print out postscript commands when appropriate
   #
 
-
-
-  # FIXME
   xoffset = 0
   yoffset = 1 - ytiles
   for inputfile in inputfiles:
@@ -261,8 +258,6 @@ def main():
       continue
 
     gpx = doelement(tree.getroot())
-
-
 
     print("%% File: %s" % inputfile)
     for track in gpx:
@@ -601,6 +596,13 @@ def haversine(lat1, lon1, lat2, lon2):
   # 6367 km is the radius of the Earth
   km = 6367 * c
   return km
+
+
+##
+## tile()
+## Given a number of tiles and an aspect ratio, find the best number of
+## rows and columns for the tiles
+##
 
 def tile(n, w, h):
   x = 1
