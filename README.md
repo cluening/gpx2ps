@@ -6,6 +6,8 @@ Visualize your GPS traces without any pesky maps getting in the way
 
 Given a directory full of `.gpx` files and a bounding box, `gpx2ps` will render them as a postscript file written to `STDOUT`.
 
+![Seattle](seattle.jpg)
+
 ## Usage
 
 ```
