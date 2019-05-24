@@ -120,7 +120,8 @@ def main():
   margin = 0
 
   inputfiles = glob.glob(args.inputdir + "/*.gpx")
-  inputfiles.sort()
+  inputfiles = sortedanum(inputfiles)
+
   if len(inputfiles) == 0:
     sys.stderr.write("Error: no files found\n")
     sys.exit(1)
@@ -614,6 +615,22 @@ def tile(n, w, h):
       y += 1
   return (x, y)
 
+##
+## sortedanum()
+## Given a list, return an alphanumeric sorted list.  Stolen from
+## stackoverflow
+## 
+
+def sortedanum( l ):
+    """ Sorts the given iterable in the way that is expected.
+
+    Required arguments:
+    l -- The iterable to be sorted.
+
+    """
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key = alphanum_key)
 
 if __name__ == "__main__":
   main()
