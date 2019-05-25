@@ -199,7 +199,7 @@ def main():
 
   #
   # Tiles mode
-  # FIXME: Do... something
+  # Set things up for drawing a page full of tiles instead of a single map
   #
   if args.tiles == True:
     margin = 2
@@ -619,7 +619,7 @@ def tile(n, w, h):
 ## sortedanum()
 ## Given a list, return an alphanumeric sorted list.  Stolen from
 ## stackoverflow
-## 
+##
 
 def sortedanum( l ):
     """ Sorts the given iterable in the way that is expected.
