@@ -50,6 +50,8 @@ def main():
                       help="Center output on this point.  Use with --radius")
   boxgroup.add_argument("--tiles", dest="tiles", action="store_true",
                       help="Render in tile mode, with one track per tile")
+  parser.add_argument("--droppercent", dest="droppercent", action="store", type=int,
+                      help="Percentage of points to uniformly drop.  Results in smaller output")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
@@ -116,6 +118,14 @@ def main():
     papersize = (792, 612)
   else:
     papersize = (612, 792)
+
+  if args.droppercent != None:
+    if args.droppercent > 100 or args.droppercent < 0:
+      sys.stderr.write("Error: invalid percent to drop\n")
+      sys.exit(1)
+    keeppercent = 100 - args.droppercent
+  else:
+    keeppercent = 100
 
   margin = 0
 
@@ -288,7 +298,13 @@ def main():
         #print("newpath")
         prevdrawn = False
         newpathwritten = False
+        totaldrawn = 0.0
+        totalseen = 0.0
         for i in range(1, len(segment)):
+          totalseen += 1
+          if totaldrawn / totalseen > keeppercent/100.0:
+            continue
+          totaldrawn += 1
           x, y = projfunc(centerlat, centerlon, segment[i][0], segment[i][1])
           # Check to see if this point is in the bounding box
           if ((segment[i][0] > minlat and segment[i][0] < maxlat) and
