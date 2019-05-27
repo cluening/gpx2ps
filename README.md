@@ -17,6 +17,7 @@ Example:
 ```
 usage: gpx2ps.py [-h] [--replicate REPLICATE] [--inputdir INPUTDIR]
                  [--fgcolor FGCOLOR] [--bgcolor BGCOLOR]
+                 [--linewidth LINEWIDTH] [--droppercent DROPPERCENT]
                  [--autofit | --bbox MINLAT,MINLON,MAXLAT,MAXLON | --center LAT,LON | --tiles]
                  [--radius RADIUS] [--title TITLE] [--fontsize FONTSIZE]
                  [--thinfont THINFONT] [--boldfont BOLDFONT]
@@ -31,6 +32,12 @@ optional arguments:
   --inputdir INPUTDIR   Directory that contains gpx files
   --fgcolor FGCOLOR     Foreground color in #RRGGBB format
   --bgcolor BGCOLOR     Background color in #RRGGBB format
+  --linewidth LINEWIDTH
+                        Width of line stroke. Default: 0 (smallest possible
+                        that printer can do)
+  --droppercent DROPPERCENT
+                        Percentage of points to uniformly drop. Results in
+                        smaller output
   --autofit             Automatically crop output to fit data
   --bbox MINLAT,MINLON,MAXLAT,MAXLON
                         Crop output to fit within this bounding box

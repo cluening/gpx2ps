@@ -41,6 +41,11 @@ def main():
                       help="Foreground color in #RRGGBB format")
   parser.add_argument("--bgcolor", dest="bgcolor", action="store", default="#FFFFFF",
                       help="Background color in #RRGGBB format")
+  parser.add_argument("--linewidth", dest="linewidth", action="store", type=float, default=0,
+                      help="Width of line stroke.  Default: 0 (smallest possible that printer can do)")
+  parser.add_argument("--droppercent", dest="droppercent", action="store", type=int,
+                    help="Percentage of points to uniformly drop.  Results in smaller output")
+
   boxgroup.add_argument("--autofit", dest="autofit", action="store_true",
                       help="Automatically crop output to fit data")
   boxgroup.add_argument("--bbox", dest="bbox", action="store",
@@ -50,10 +55,7 @@ def main():
                       help="Center output on this point.  Use with --radius")
   boxgroup.add_argument("--tiles", dest="tiles", action="store_true",
                       help="Render in tile mode, with one track per tile")
-  parser.add_argument("--droppercent", dest="droppercent", action="store", type=int,
-                      help="Percentage of points to uniformly drop.  Results in smaller output")
-  parser.add_argument("--linewidth", dest="linewidth", action="store", type=float, default=0,
-                      help="Width of line stroke.  Default: 0 (smallest possible that printer can do)")
+
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
