@@ -52,6 +52,8 @@ def main():
                       help="Render in tile mode, with one track per tile")
   parser.add_argument("--droppercent", dest="droppercent", action="store", type=int,
                       help="Percentage of points to uniformly drop.  Results in smaller output")
+  parser.add_argument("--linewidth", dest="linewidth", action="store", type=float, default=0,
+                      help="Width of line stroke.  Default: 0 (smallest possible that printer can do)")
   parser.add_argument("--radius", dest="radius", action="store",
                       help="Radius of area to include in output.  Use with --center")
   parser.add_argument("--title", dest="title", action="store",
@@ -249,7 +251,7 @@ def main():
   if args.orientation == "landscape":
     print("90 rotate")
     print("%d %d translate" % (0, papersize[0]*-1))
-  print("0 setlinewidth")  # '0' means "thinnest possible on device"
+  print("{} setlinewidth".format(args.linewidth))  # '0' means "thinnest possible on device"
   print("1 setlinecap")    # rounded
   print("1 setlinejoin")   # rounded
   print("%f %f %f setrgbcolor clippath fill" % bgrgb) # set the background fill
